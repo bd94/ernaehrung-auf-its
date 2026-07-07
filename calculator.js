@@ -195,6 +195,14 @@ class InfusionSolutionManager {
         carbohydratesPerMl: 0.20
       },
       {
+        name: 'Glucose 40%',
+        kcalPerMl: 1.60,
+        proteinPerMl: 0,
+        aminoAcidsPerMl: 0,
+        fatPerMl: 0,
+        carbohydratesPerMl: 0.40
+      },
+      {
         name: 'Aminoplasmal 10%',
         kcalPerMl: 0.40,
         proteinPerMl: 0,
