@@ -277,8 +277,25 @@ class InfusionRateCalculator {
     return { calories: totalCalories, aminoAcids: totalAminoAcids };
   }
 
+  // Prüft ob eine Lösung eine Mischlösung ist (enthält sowohl KH als auch Fett)
+  isMixedSolution(solution) {
+    return solution.carbohydratesPerMl > 0 && solution.fatPerMl > 0;
+  }
+
+  // Prüft ob alle geplanten Lösungen Einzelkomponenten sind
+  areAllSingleComponents(plannedSolutions) {
+    for (const name of plannedSolutions) {
+      const solution = this.solutionManager.findSolution(name);
+      if (!solution) continue;
+      if (this.isMixedSolution(solution)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Erforderliche Laufraten berechnen
-  calculateRequiredRates(targetCalories, targetAminoAcids, runningSolutions, plannedSolutions) {
+  calculateRequiredRates(targetCalories, targetAminoAcids, runningSolutions, plannedSolutions, carbRatio = 70, fatRatio = 30) {
     // Berechne aktuelle Aufnahme
     const currentIntake = this.calculateCurrentIntake(runningSolutions);
 
@@ -344,6 +361,92 @@ class InfusionRateCalculator {
           mlPerDay: Math.max(0, rate2) * 24
         }
       ];
+    }
+
+    // Wenn drei geplante Lösungen: Einzelkomponenten-Ernährung
+    if (plannedSolutions.length === 3) {
+      const sol1 = this.solutionManager.findSolution(plannedSolutions[0]);
+      const sol2 = this.solutionManager.findSolution(plannedSolutions[1]);
+      const sol3 = this.solutionManager.findSolution(plannedSolutions[2]);
+
+      if (!sol1 || !sol2 || !sol3) return null;
+
+      // Prüfe ob alle Einzelkomponenten sind
+      if (!this.areAllSingleComponents(plannedSolutions)) {
+        alert('Bei 3 Lösungen müssen alle Einzelkomponenten sein (keine Mischlösungen). Die Makronährstoff-Verteilung kann sonst nicht eingehalten werden.');
+        return null;
+      }
+
+      // Kalorien aus Aminosäuren subtrahieren (1g AS = 4 kcal)
+      const remainingNonProteinCalories = remainingCalories - (remainingAminoAcids * 4);
+
+      // Berechne Kalorien nach Verteilung
+      const carbCalories = remainingNonProteinCalories * (carbRatio / 100);
+      const fatCalories = remainingNonProteinCalories * (fatRatio / 100);
+
+      // Finde welche Lösung welcher Makronährstoff ist
+      let aminoSol = null, carbSol = null, fatSol = null;
+      let aminoIndex = -1, carbIndex = -1, fatIndex = -1;
+
+      for (let i = 0; i < 3; i++) {
+        const sol = [sol1, sol2, sol3][i];
+        const name = plannedSolutions[i];
+
+        // Aminosäure-Lösung: hohe AS, kein KH/Fett
+        if (sol.aminoAcidsPerMl > 0 && sol.carbohydratesPerMl === 0 && sol.fatPerMl === 0) {
+          aminoSol = sol;
+          aminoIndex = i;
+        }
+        // Kohlenhydrat-Lösung: hohe KH, kein Fett
+        else if (sol.carbohydratesPerMl > 0 && sol.fatPerMl === 0) {
+          carbSol = sol;
+          carbIndex = i;
+        }
+        // Fett-Lösung: hohes Fett, keine KH
+        else if (sol.fatPerMl > 0 && sol.carbohydratesPerMl === 0) {
+          fatSol = sol;
+          fatIndex = i;
+        }
+      }
+
+      if (!aminoSol || !carbSol || !fatSol) {
+        alert('Für 3-Komponenten-Ernährung benötigen Sie: 1 Aminosäure-Lösung, 1 Kohlenhydrat-Lösung, 1 Fett-Lösung.');
+        return null;
+      }
+
+      // Berechne Raten
+      // Aminosäure: nach Bedarf
+      const aminoRate = remainingAminoAcids / (aminoSol.aminoAcidsPerMl * 24);
+
+      // Kohlenhydrate: nach Kalorien (1g KH = 4 kcal)
+      const carbGrams = carbCalories / 4;
+      const carbRate = carbGrams / (carbSol.carbohydratesPerMl * 24);
+
+      // Fett: nach Kalorien (1g Fett = 9 kcal)
+      const fatGrams = fatCalories / 9;
+      const fatRate = fatGrams / (fatSol.fatPerMl * 24);
+
+      const results = [null, null, null];
+      results[aminoIndex] = {
+        name: plannedSolutions[aminoIndex],
+        ratePerHour: Math.max(0, aminoRate),
+        mlPerDay: Math.max(0, aminoRate) * 24,
+        component: 'Aminosäuren'
+      };
+      results[carbIndex] = {
+        name: plannedSolutions[carbIndex],
+        ratePerHour: Math.max(0, carbRate),
+        mlPerDay: Math.max(0, carbRate) * 24,
+        component: 'Kohlenhydrate'
+      };
+      results[fatIndex] = {
+        name: plannedSolutions[fatIndex],
+        ratePerHour: Math.max(0, fatRate),
+        mlPerDay: Math.max(0, fatRate) * 24,
+        component: 'Fett'
+      };
+
+      return results;
     }
 
     return null;

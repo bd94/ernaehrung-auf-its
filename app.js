@@ -37,6 +37,25 @@ document.getElementById('phase').addEventListener('change', (e) => {
   }
 });
 
+// Makronährstoff-Verteilung: Summe aktualisieren
+function updateMacroSum() {
+  const carbRatio = parseFloat(document.getElementById('carb-ratio').value) || 0;
+  const fatRatio = parseFloat(document.getElementById('fat-ratio').value) || 0;
+  const sum = carbRatio + fatRatio;
+  document.getElementById('macro-sum').textContent = sum;
+
+  // Warnung wenn nicht 100%
+  const sumElement = document.getElementById('macro-sum');
+  if (Math.abs(sum - 100) > 0.1) {
+    sumElement.style.color = '#dc3545';
+  } else {
+    sumElement.style.color = '#764ba2';
+  }
+}
+
+document.getElementById('carb-ratio').addEventListener('input', updateMacroSum);
+document.getElementById('fat-ratio').addEventListener('input', updateMacroSum);
+
 // Berechnungen durchführen
 document.getElementById('calculate-btn').addEventListener('click', () => {
   const weight = parseFloat(document.getElementById('weight').value);
@@ -179,10 +198,14 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
     return;
   }
 
-  if (plannedSolutions.length > 2) {
-    alert('Derzeit werden maximal 2 geplante Infusionen unterstützt.');
+  if (plannedSolutions.length > 3) {
+    alert('Derzeit werden maximal 3 geplante Infusionen unterstützt.');
     return;
   }
+
+  // Makronährstoff-Verteilung abrufen
+  const carbRatio = parseFloat(document.getElementById('carb-ratio').value) || 70;
+  const fatRatio = parseFloat(document.getElementById('fat-ratio').value) || 30;
 
   // Aktuelle Aufnahme berechnen
   const currentIntake = rateCalculator.calculateCurrentIntake(runningSolutions);
@@ -194,7 +217,9 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
     targetCalories,
     targetAminoAcids,
     runningSolutions,
-    plannedSolutions
+    plannedSolutions,
+    carbRatio,
+    fatRatio
   );
 
   // Ergebnisse anzeigen
@@ -222,6 +247,13 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
         const p3 = document.createElement('p');
         p3.innerHTML = `Limitierender Faktor: <strong>${rate.limitingFactor}</strong>`;
         div.appendChild(p3);
+      }
+
+      if (rate.component) {
+        const p4 = document.createElement('p');
+        p4.innerHTML = `Komponente: <strong>${rate.component}</strong>`;
+        p4.style.color = '#764ba2';
+        div.appendChild(p4);
       }
 
       ratesResults.appendChild(div);
