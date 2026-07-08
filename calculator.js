@@ -223,6 +223,14 @@ class InfusionSolutionManager {
         carbohydratesPerMl: 0.14
       },
       {
+        name: 'Survimed OPD',
+        kcalPerMl: 1.01,
+        proteinPerMl: 0.045,
+        aminoAcidsPerMl: 0,
+        fatPerMl: 0.028,
+        carbohydratesPerMl: 0.143
+      },
+      {
         name: 'Survimed OPD HN',
         kcalPerMl: 1.33,
         proteinPerMl: 0.067,
