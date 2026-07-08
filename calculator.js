@@ -43,12 +43,12 @@ class NutritionCalculator {
       // Aminosäureziel
       aminoAcids: {
         bmiUnder30: {
-          formula: '1.2 * weight',
-          description: 'BMI ≤30'
+          day1to3: { formula: '0.75 * 1.2 * weight', description: 'Tag 1-3, BMI ≤30' },
+          day4plus: { formula: '1.2 * weight', description: 'Ab Tag 4, BMI ≤30' }
         },
         bmiOver30: {
-          formula: '1.8 * ibw',
-          description: 'BMI >30'
+          day1to3: { formula: '0.75 * 1.8 * ibw', description: 'Tag 1-3, BMI >30' },
+          day4plus: { formula: '1.8 * ibw', description: 'Ab Tag 4, BMI >30' }
         }
       },
       // Proteinziel
@@ -107,19 +107,21 @@ class NutritionCalculator {
 
   // Aminosäureziel berechnen
   calculateAminoAcidGoal(weight, bmi, ibw, phase, day) {
-    let baseGoal;
     if (bmi <= 30) {
-      baseGoal = 1.2 * weight;
+      // BMI ≤30: Tag 1-3 in Aggression 75% von 1.2*weight, sonst 1.2*weight
+      if (phase === 'aggression' && day <= 3) {
+        return 0.75 * 1.2 * weight;
+      } else {
+        return 1.2 * weight;
+      }
     } else {
-      baseGoal = 1.8 * ibw;
+      // BMI >30: Tag 1-3 in Aggression 75% von 1.8*ibw, sonst 1.8*ibw
+      if (phase === 'aggression' && day <= 3) {
+        return 0.75 * 1.8 * ibw;
+      } else {
+        return 1.8 * ibw;
+      }
     }
-
-    // Tag 1-3 Reduktion nur in Aggression
-    if (phase === 'aggression' && day <= 3) {
-      baseGoal *= 0.75;
-    }
-
-    return baseGoal;
   }
 
   // Proteinziel berechnen

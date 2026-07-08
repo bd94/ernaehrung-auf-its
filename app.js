@@ -318,8 +318,10 @@ function loadFormulasToUI() {
 
   document.getElementById('formula-cal-post-30').value = formulas.caloriesPostaggression.bmiUnder30.formula;
 
-  document.getElementById('formula-amino-30').value = formulas.aminoAcids.bmiUnder30.formula;
-  document.getElementById('formula-amino-over30').value = formulas.aminoAcids.bmiOver30.formula;
+  document.getElementById('formula-amino-30-d13').value = formulas.aminoAcids.bmiUnder30.day1to3.formula;
+  document.getElementById('formula-amino-30-d4').value = formulas.aminoAcids.bmiUnder30.day4plus.formula;
+  document.getElementById('formula-amino-over30-d13').value = formulas.aminoAcids.bmiOver30.day1to3.formula;
+  document.getElementById('formula-amino-over30-d4').value = formulas.aminoAcids.bmiOver30.day4plus.formula;
 
   document.getElementById('formula-protein-30-d13').value = formulas.protein.bmiUnder30.day1to3.formula;
   document.getElementById('formula-protein-30-d4').value = formulas.protein.bmiUnder30.day4plus.formula;
@@ -345,8 +347,10 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
 
   calculator.formulas.caloriesPostaggression.bmiUnder30.formula = document.getElementById('formula-cal-post-30').value;
 
-  calculator.formulas.aminoAcids.bmiUnder30.formula = document.getElementById('formula-amino-30').value;
-  calculator.formulas.aminoAcids.bmiOver30.formula = document.getElementById('formula-amino-over30').value;
+  calculator.formulas.aminoAcids.bmiUnder30.day1to3.formula = document.getElementById('formula-amino-30-d13').value;
+  calculator.formulas.aminoAcids.bmiUnder30.day4plus.formula = document.getElementById('formula-amino-30-d4').value;
+  calculator.formulas.aminoAcids.bmiOver30.day1to3.formula = document.getElementById('formula-amino-over30-d13').value;
+  calculator.formulas.aminoAcids.bmiOver30.day4plus.formula = document.getElementById('formula-amino-over30-d4').value;
 
   calculator.formulas.protein.bmiUnder30.day1to3.formula = document.getElementById('formula-protein-30-d13').value;
   calculator.formulas.protein.bmiUnder30.day4plus.formula = document.getElementById('formula-protein-30-d4').value;
