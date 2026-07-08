@@ -50,6 +50,22 @@ class NutritionCalculator {
           formula: '1.8 * ibw',
           description: 'BMI >30'
         }
+      },
+      // Proteinziel
+      protein: {
+        bmiUnder30: {
+          day1to3: { formula: '0.75 * 1.0 * weight', description: 'Tag 1-3, BMI <30' },
+          day4plus: { formula: '1.0 * weight', description: 'Ab Tag 4, BMI <30' }
+        },
+        bmiOver30: {
+          day1to3: { formula: '0.75 * 1.5 * ibw', description: 'Tag 1-3, BMI >30' },
+          day4plus: { formula: '1.5 * ibw', description: 'Ab Tag 4, BMI >30' }
+        }
+      },
+      // CVVHD-Zuschläge
+      cvvhd: {
+        aminoAcids: { formula: '0.6 * 24', description: 'CVVHD Aminosäure-Zuschlag' },
+        protein: { formula: '0.5 * 24', description: 'CVVHD Protein-Zuschlag' }
       }
     };
   }
@@ -90,12 +106,41 @@ class NutritionCalculator {
   }
 
   // Aminosäureziel berechnen
-  calculateAminoAcidGoal(weight, bmi, ibw) {
+  calculateAminoAcidGoal(weight, bmi, ibw, phase, day) {
+    let baseGoal;
     if (bmi <= 30) {
-      return 1.2 * weight;
+      baseGoal = 1.2 * weight;
     } else {
-      return 1.8 * ibw;
+      baseGoal = 1.8 * ibw;
     }
+
+    // Tag 1-3 Reduktion nur in Aggression
+    if (phase === 'aggression' && day <= 3) {
+      baseGoal *= 0.75;
+    }
+
+    return baseGoal;
+  }
+
+  // Proteinziel berechnen
+  calculateProteinGoal(weight, bmi, ibw, phase, day) {
+    if (bmi < 30) {
+      // BMI <30: 1 g/kg aktuelles Körpergewicht
+      return day <= 3 ? 0.75 * 1.0 * weight : 1.0 * weight;
+    } else {
+      // BMI >30: 1.5 g/kg Idealgewicht
+      return day <= 3 ? 0.75 * 1.5 * ibw : 1.5 * ibw;
+    }
+  }
+
+  // CVVHD-Zuschlag für Aminosäuren
+  calculateCVVHDAminoAcidAddition() {
+    return 0.6 * 24; // 0.6 g/h * 24h = 14.4 g
+  }
+
+  // CVVHD-Zuschlag für Protein
+  calculateCVVHDProteinAddition() {
+    return 0.5 * 24; // 0.5 g/h * 24h = 12 g
   }
 
   // Evaluiert eine Formel mit gegebenen Variablen
@@ -152,6 +197,11 @@ class NutritionCalculator {
 // CSV-Parser für Infusionslösungen
 class InfusionSolutionManager {
   constructor() {
+    // Umrechnungsfaktor: Protein zu Aminosäuren
+    // Standard-Umrechnung: Proteingehalt × 1.2 = Aminosäuregehalt
+    // bzw. Aminosäuregehalt ÷ 1.2 = Proteingehalt
+    this.proteinToAminoAcidFactor = 1.2;
+
     // Default-Lösungen (aus loesungen.csv)
     this.solutions = [
       {
@@ -169,6 +219,14 @@ class InfusionSolutionManager {
         aminoAcidsPerMl: 0,
         fatPerMl: 0.033,
         carbohydratesPerMl: 0.14
+      },
+      {
+        name: 'Survimed OPD HN',
+        kcalPerMl: 1.33,
+        proteinPerMl: 0.067,
+        aminoAcidsPerMl: 0,
+        fatPerMl: 0.037,
+        carbohydratesPerMl: 0.183
       },
       {
         name: 'SMOFlipid 20%',
@@ -260,6 +318,30 @@ class InfusionSolutionManager {
   addSolution(solution) {
     this.solutions.push(solution);
   }
+
+  // Protein zu Aminosäuren umrechnen
+  proteinToAminoAcids(proteinGrams) {
+    return proteinGrams * this.proteinToAminoAcidFactor;
+  }
+
+  // Aminosäuren zu Protein umrechnen
+  aminoAcidsToProtein(aminoAcidsGrams) {
+    return aminoAcidsGrams / this.proteinToAminoAcidFactor;
+  }
+
+  // Gesamte "Protein-Äquivalenz" einer Lösung berechnen (Protein + Aminosäuren in Protein-Einheiten)
+  getTotalProteinEquivalent(solution, ml) {
+    const proteinFromProtein = solution.proteinPerMl * ml;
+    const proteinFromAminoAcids = this.aminoAcidsToProtein(solution.aminoAcidsPerMl * ml);
+    return proteinFromProtein + proteinFromAminoAcids;
+  }
+
+  // Gesamte "Aminosäure-Äquivalenz" einer Lösung berechnen (Protein + Aminosäuren in AS-Einheiten)
+  getTotalAminoAcidEquivalent(solution, ml) {
+    const aminoFromAminoAcids = solution.aminoAcidsPerMl * ml;
+    const aminoFromProtein = this.proteinToAminoAcids(solution.proteinPerMl * ml);
+    return aminoFromAminoAcids + aminoFromProtein;
+  }
 }
 
 // Laufraten-Berechner
@@ -272,17 +354,19 @@ class InfusionRateCalculator {
   calculateCurrentIntake(runningSolutions) {
     let totalCalories = 0;
     let totalAminoAcids = 0;
+    let totalProtein = 0;
 
     for (const running of runningSolutions) {
       const solution = this.solutionManager.findSolution(running.name);
       if (solution) {
         const mlPerDay = running.ratePerHour * 24;
         totalCalories += solution.kcalPerMl * mlPerDay;
-        totalAminoAcids += solution.aminoAcidsPerMl * mlPerDay;
+        totalAminoAcids += this.solutionManager.getTotalAminoAcidEquivalent(solution, mlPerDay);
+        totalProtein += this.solutionManager.getTotalProteinEquivalent(solution, mlPerDay);
       }
     }
 
-    return { calories: totalCalories, aminoAcids: totalAminoAcids };
+    return { calories: totalCalories, aminoAcids: totalAminoAcids, protein: totalProtein };
   }
 
   // Prüft ob eine Lösung eine Mischlösung ist (enthält sowohl KH als auch Fett)
@@ -303,13 +387,14 @@ class InfusionRateCalculator {
   }
 
   // Erforderliche Laufraten berechnen
-  calculateRequiredRates(targetCalories, targetAminoAcids, runningSolutions, plannedSolutions, carbRatio = 70, fatRatio = 30) {
+  calculateRequiredRates(targetCalories, targetAminoAcids, targetProtein, runningSolutions, plannedSolutions, carbRatio = 70, fatRatio = 30, ignoreAminoGoal = false, ignoreProteinGoal = false) {
     // Berechne aktuelle Aufnahme
     const currentIntake = this.calculateCurrentIntake(runningSolutions);
 
     // Berechne verbleibenden Bedarf
     const remainingCalories = Math.max(0, targetCalories - currentIntake.calories);
-    const remainingAminoAcids = Math.max(0, targetAminoAcids - currentIntake.aminoAcids);
+    const remainingAminoAcids = ignoreAminoGoal ? 0 : Math.max(0, targetAminoAcids - currentIntake.aminoAcids);
+    const remainingProtein = ignoreProteinGoal ? 0 : Math.max(0, targetProtein - currentIntake.protein);
 
     // Wenn nur eine geplante Lösung: einfache Berechnung
     if (plannedSolutions.length === 1) {
@@ -317,13 +402,28 @@ class InfusionRateCalculator {
       if (!solution) return null;
 
       const rateForCalories = remainingCalories / (solution.kcalPerMl * 24);
-      const rateForAminoAcids = remainingAminoAcids / (solution.aminoAcidsPerMl * 24);
+
+      // Berechne benötigte Rate für Aminosäuren (umgerechnet auf AS-Äquivalent)
+      const aminoEquivPerMl = this.solutionManager.getTotalAminoAcidEquivalent(solution, 1);
+      const rateForAminoAcids = aminoEquivPerMl > 0 ? remainingAminoAcids / (aminoEquivPerMl * 24) : 0;
+
+      // Berechne benötigte Rate für Protein (umgerechnet auf Protein-Äquivalent)
+      const proteinEquivPerMl = this.solutionManager.getTotalProteinEquivalent(solution, 1);
+      const rateForProtein = proteinEquivPerMl > 0 ? remainingProtein / (proteinEquivPerMl * 24) : 0;
+
+      // Nimm die höchste Rate (limitierender Faktor)
+      const rates = [
+        { rate: rateForCalories, factor: 'Kalorien' },
+        { rate: rateForAminoAcids, factor: 'Aminosäuren' },
+        { rate: rateForProtein, factor: 'Protein' }
+      ];
+      const maxRate = rates.reduce((max, curr) => curr.rate > max.rate ? curr : max);
 
       return [{
         name: plannedSolutions[0],
-        ratePerHour: Math.max(rateForCalories, rateForAminoAcids),
-        mlPerDay: Math.max(rateForCalories, rateForAminoAcids) * 24,
-        limitingFactor: rateForCalories > rateForAminoAcids ? 'Kalorien' : 'Aminosäuren'
+        ratePerHour: maxRate.rate,
+        mlPerDay: maxRate.rate * 24,
+        limitingFactor: maxRate.factor
       }];
     }
 
@@ -336,15 +436,40 @@ class InfusionRateCalculator {
 
       // Gleichungssystem:
       // sol1.kcalPerMl * rate1 * 24 + sol2.kcalPerMl * rate2 * 24 = remainingCalories
-      // sol1.aminoAcidsPerMl * rate1 * 24 + sol2.aminoAcidsPerMl * rate2 * 24 = remainingAminoAcids
+      // Für Protein/AS: verwende Äquivalente (kombiniert Protein + Aminosäuren)
 
       const a11 = sol1.kcalPerMl * 24;
       const a12 = sol2.kcalPerMl * 24;
       const b1 = remainingCalories;
 
-      const a21 = sol1.aminoAcidsPerMl * 24;
-      const a22 = sol2.aminoAcidsPerMl * 24;
-      const b2 = remainingAminoAcids;
+      // Bestimme welches Ziel verwendet werden soll (AS oder Protein)
+      // Wenn beide Ziele aktiv sind, bevorzuge Aminosäuren, wenn mindestens eine Lösung AS hat
+      let useAminoAcids = !ignoreAminoGoal;
+      let useProtein = !ignoreProteinGoal;
+
+      const sol1HasAmino = sol1.aminoAcidsPerMl > 0;
+      const sol2HasAmino = sol2.aminoAcidsPerMl > 0;
+      const sol1HasProtein = sol1.proteinPerMl > 0;
+      const sol2HasProtein = sol2.proteinPerMl > 0;
+
+      let a21, a22, b2;
+
+      if (useAminoAcids && (sol1HasAmino || sol2HasAmino || sol1HasProtein || sol2HasProtein)) {
+        // Verwende Aminosäure-Äquivalente (Protein wird zu AS konvertiert)
+        a21 = this.solutionManager.getTotalAminoAcidEquivalent(sol1, 1) * 24;
+        a22 = this.solutionManager.getTotalAminoAcidEquivalent(sol2, 1) * 24;
+        b2 = remainingAminoAcids;
+      } else if (useProtein && (sol1HasProtein || sol2HasProtein || sol1HasAmino || sol2HasAmino)) {
+        // Verwende Protein-Äquivalente (AS wird zu Protein konvertiert)
+        a21 = this.solutionManager.getTotalProteinEquivalent(sol1, 1) * 24;
+        a22 = this.solutionManager.getTotalProteinEquivalent(sol2, 1) * 24;
+        b2 = remainingProtein;
+      } else {
+        // Keine Protein/AS Ziele aktiv - verwende nur Kalorien
+        a21 = 0;
+        a22 = 0;
+        b2 = 0;
+      }
 
       // Cramer's Rule
       const det = a11 * a22 - a12 * a21;
@@ -385,25 +510,35 @@ class InfusionRateCalculator {
         return null;
       }
 
-      // Kalorien aus Aminosäuren subtrahieren (1g AS = 4 kcal)
-      const remainingNonProteinCalories = remainingCalories - (remainingAminoAcids * 4);
+      // Verwende das höhere der beiden Ziele (AS oder Protein) für Protein-Kalorien
+      let proteinAminoGrams = 0;
+      if (!ignoreAminoGoal && remainingAminoAcids > 0) {
+        proteinAminoGrams = Math.max(proteinAminoGrams, remainingAminoAcids);
+      }
+      if (!ignoreProteinGoal && remainingProtein > 0) {
+        // Konvertiere Protein zu Aminosäure-Äquivalent für einheitliche Berechnung
+        proteinAminoGrams = Math.max(proteinAminoGrams, this.solutionManager.proteinToAminoAcids(remainingProtein));
+      }
+
+      // Kalorien aus Aminosäuren/Protein subtrahieren (1g AS/Protein = 4 kcal)
+      const remainingNonProteinCalories = remainingCalories - (proteinAminoGrams * 4);
 
       // Berechne Kalorien nach Verteilung
       const carbCalories = remainingNonProteinCalories * (carbRatio / 100);
       const fatCalories = remainingNonProteinCalories * (fatRatio / 100);
 
       // Finde welche Lösung welcher Makronährstoff ist
-      let aminoSol = null, carbSol = null, fatSol = null;
-      let aminoIndex = -1, carbIndex = -1, fatIndex = -1;
+      let proteinSol = null, carbSol = null, fatSol = null;
+      let proteinIndex = -1, carbIndex = -1, fatIndex = -1;
 
       for (let i = 0; i < 3; i++) {
         const sol = [sol1, sol2, sol3][i];
         const name = plannedSolutions[i];
 
-        // Aminosäure-Lösung: hohe AS, kein KH/Fett
-        if (sol.aminoAcidsPerMl > 0 && sol.carbohydratesPerMl === 0 && sol.fatPerMl === 0) {
-          aminoSol = sol;
-          aminoIndex = i;
+        // Protein/Aminosäure-Lösung: hohe AS oder Protein, kein KH/Fett
+        if ((sol.aminoAcidsPerMl > 0 || sol.proteinPerMl > 0) && sol.carbohydratesPerMl === 0 && sol.fatPerMl === 0) {
+          proteinSol = sol;
+          proteinIndex = i;
         }
         // Kohlenhydrat-Lösung: hohe KH, kein Fett
         else if (sol.carbohydratesPerMl > 0 && sol.fatPerMl === 0) {
@@ -417,14 +552,15 @@ class InfusionRateCalculator {
         }
       }
 
-      if (!aminoSol || !carbSol || !fatSol) {
-        alert('Für 3-Komponenten-Ernährung benötigen Sie: 1 Aminosäure-Lösung, 1 Kohlenhydrat-Lösung, 1 Fett-Lösung.');
+      if (!proteinSol || !carbSol || !fatSol) {
+        alert('Für 3-Komponenten-Ernährung benötigen Sie: 1 Protein/Aminosäure-Lösung, 1 Kohlenhydrat-Lösung, 1 Fett-Lösung.');
         return null;
       }
 
       // Berechne Raten
-      // Aminosäure: nach Bedarf
-      const aminoRate = remainingAminoAcids / (aminoSol.aminoAcidsPerMl * 24);
+      // Protein/Aminosäure: nach Bedarf (verwende Aminosäure-Äquivalent)
+      const proteinAminoEquivPerMl = this.solutionManager.getTotalAminoAcidEquivalent(proteinSol, 1);
+      const proteinRate = proteinAminoEquivPerMl > 0 ? proteinAminoGrams / (proteinAminoEquivPerMl * 24) : 0;
 
       // Kohlenhydrate: nach Kalorien (1g KH = 4 kcal)
       const carbGrams = carbCalories / 4;
@@ -435,11 +571,11 @@ class InfusionRateCalculator {
       const fatRate = fatGrams / (fatSol.fatPerMl * 24);
 
       const results = [null, null, null];
-      results[aminoIndex] = {
-        name: plannedSolutions[aminoIndex],
-        ratePerHour: Math.max(0, aminoRate),
-        mlPerDay: Math.max(0, aminoRate) * 24,
-        component: 'Aminosäuren'
+      results[proteinIndex] = {
+        name: plannedSolutions[proteinIndex],
+        ratePerHour: Math.max(0, proteinRate),
+        mlPerDay: Math.max(0, proteinRate) * 24,
+        component: 'Protein/Aminosäuren'
       };
       results[carbIndex] = {
         name: plannedSolutions[carbIndex],

@@ -74,7 +74,21 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
   const abw = calculator.calculateABW(weight, ibw);
 
   let calorieGoal = calculator.calculateCalorieGoal(weight, bmi, ibw, phase, day);
-  const aminoGoal = calculator.calculateAminoAcidGoal(weight, bmi, ibw);
+  const cvvhd = document.getElementById('cvvhd-checkbox').checked;
+
+  // Berechne Aminosäureziel
+  let aminoGoal = calculator.calculateAminoAcidGoal(weight, bmi, ibw, phase, day);
+  const aminoGoalBase = aminoGoal;
+  if (cvvhd) {
+    aminoGoal += calculator.calculateCVVHDAminoAcidAddition();
+  }
+
+  // Berechne Proteinziel
+  let proteinGoal = calculator.calculateProteinGoal(weight, bmi, ibw, phase, day);
+  const proteinGoalBase = proteinGoal;
+  if (cvvhd) {
+    proteinGoal += calculator.calculateCVVHDProteinAddition();
+  }
 
   // Ergebnisse anzeigen
   document.getElementById('result-bmi').textContent = bmi.toFixed(1);
@@ -91,7 +105,18 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
   }
 
   document.getElementById('amino-goal').value = aminoGoal.toFixed(1);
-  document.getElementById('auto-amino').textContent = `(automatisch: ${aminoGoal.toFixed(1)} g)`;
+  if (cvvhd) {
+    document.getElementById('auto-amino').textContent = `(automatisch: ${aminoGoalBase.toFixed(1)} + ${calculator.calculateCVVHDAminoAcidAddition().toFixed(1)} CVVHD = ${aminoGoal.toFixed(1)} g)`;
+  } else {
+    document.getElementById('auto-amino').textContent = `(automatisch: ${aminoGoal.toFixed(1)} g)`;
+  }
+
+  document.getElementById('protein-goal').value = proteinGoal.toFixed(1);
+  if (cvvhd) {
+    document.getElementById('auto-protein').textContent = `(automatisch: ${proteinGoalBase.toFixed(1)} + ${calculator.calculateCVVHDProteinAddition().toFixed(1)} CVVHD = ${proteinGoal.toFixed(1)} g)`;
+  } else {
+    document.getElementById('auto-protein').textContent = `(automatisch: ${proteinGoal.toFixed(1)} g)`;
+  }
 
   // Abschnitte anzeigen
   document.getElementById('results-section').style.display = 'block';
@@ -164,10 +189,18 @@ function createSolutionRow(id, isRunning) {
 // Laufraten berechnen
 document.getElementById('calculate-rates-btn').addEventListener('click', () => {
   const targetCalories = parseFloat(document.getElementById('calorie-goal').value);
-  const targetAminoAcids = parseFloat(document.getElementById('amino-goal').value);
+  const targetAminoAcids = parseFloat(document.getElementById('amino-goal').value) || 0;
+  const targetProtein = parseFloat(document.getElementById('protein-goal').value) || 0;
+  const ignoreAminoGoal = document.getElementById('ignore-amino-goal').checked;
+  const ignoreProteinGoal = document.getElementById('ignore-protein-goal').checked;
 
-  if (!targetCalories || !targetAminoAcids) {
-    alert('Bitte zuerst Patientendaten berechnen und Zielwerte eingeben.');
+  if (!targetCalories) {
+    alert('Bitte zuerst Patientendaten berechnen und Kalorienziel eingeben.');
+    return;
+  }
+
+  if (!ignoreAminoGoal && !targetAminoAcids && !ignoreProteinGoal && !targetProtein) {
+    alert('Bitte Aminosäure- oder Proteinziel eingeben, oder beide Ziele als "ignorieren" markieren.');
     return;
   }
 
@@ -216,10 +249,13 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
   const requiredRates = rateCalculator.calculateRequiredRates(
     targetCalories,
     targetAminoAcids,
+    targetProtein,
     runningSolutions,
     plannedSolutions,
     carbRatio,
-    fatRatio
+    fatRatio,
+    ignoreAminoGoal,
+    ignoreProteinGoal
   );
 
   // Ergebnisse anzeigen
@@ -284,6 +320,14 @@ function loadFormulasToUI() {
 
   document.getElementById('formula-amino-30').value = formulas.aminoAcids.bmiUnder30.formula;
   document.getElementById('formula-amino-over30').value = formulas.aminoAcids.bmiOver30.formula;
+
+  document.getElementById('formula-protein-30-d13').value = formulas.protein.bmiUnder30.day1to3.formula;
+  document.getElementById('formula-protein-30-d4').value = formulas.protein.bmiUnder30.day4plus.formula;
+  document.getElementById('formula-protein-over30-d13').value = formulas.protein.bmiOver30.day1to3.formula;
+  document.getElementById('formula-protein-over30-d4').value = formulas.protein.bmiOver30.day4plus.formula;
+
+  document.getElementById('formula-cvvhd-amino').value = formulas.cvvhd.aminoAcids.formula;
+  document.getElementById('formula-cvvhd-protein').value = formulas.cvvhd.protein.formula;
 }
 
 // Formeln speichern (LocalStorage statt Electron IPC)
@@ -303,6 +347,14 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
 
   calculator.formulas.aminoAcids.bmiUnder30.formula = document.getElementById('formula-amino-30').value;
   calculator.formulas.aminoAcids.bmiOver30.formula = document.getElementById('formula-amino-over30').value;
+
+  calculator.formulas.protein.bmiUnder30.day1to3.formula = document.getElementById('formula-protein-30-d13').value;
+  calculator.formulas.protein.bmiUnder30.day4plus.formula = document.getElementById('formula-protein-30-d4').value;
+  calculator.formulas.protein.bmiOver30.day1to3.formula = document.getElementById('formula-protein-over30-d13').value;
+  calculator.formulas.protein.bmiOver30.day4plus.formula = document.getElementById('formula-protein-over30-d4').value;
+
+  calculator.formulas.cvvhd.aminoAcids.formula = document.getElementById('formula-cvvhd-amino').value;
+  calculator.formulas.cvvhd.protein.formula = document.getElementById('formula-cvvhd-protein').value;
 
   // LocalStorage speichern
   try {

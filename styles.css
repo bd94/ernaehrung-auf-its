@@ -196,6 +196,37 @@ nav {
   color: #888;
 }
 
+.cvvhd-checkbox-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.cvvhd-checkbox-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.cvvhd-checkbox-container label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.cvvhd-info {
+  margin: 8px 0 0 28px;
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
 .goals-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -205,6 +236,26 @@ nav {
 .goal-item {
   display: flex;
   flex-direction: column;
+}
+
+.goal-checkbox {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goal-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.goal-checkbox label {
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  margin: 0;
 }
 
 .goal-item label {
