@@ -323,10 +323,13 @@ function loadFormulasToUI() {
   document.getElementById('formula-amino-over30-d13').value = formulas.aminoAcids.bmiOver30.day1to3.formula;
   document.getElementById('formula-amino-over30-d4').value = formulas.aminoAcids.bmiOver30.day4plus.formula;
 
-  document.getElementById('formula-protein-30-d13').value = formulas.protein.bmiUnder30.day1to3.formula;
-  document.getElementById('formula-protein-30-d4').value = formulas.protein.bmiUnder30.day4plus.formula;
-  document.getElementById('formula-protein-over30-d13').value = formulas.protein.bmiOver30.day1to3.formula;
-  document.getElementById('formula-protein-over30-d4').value = formulas.protein.bmiOver30.day4plus.formula;
+  document.getElementById('formula-protein-agg-30-d13').value = formulas.protein.aggression.bmiUnder30.day1to3.formula;
+  document.getElementById('formula-protein-agg-30-d4').value = formulas.protein.aggression.bmiUnder30.day4plus.formula;
+  document.getElementById('formula-protein-agg-over30-d13').value = formulas.protein.aggression.bmiOver30.day1to3.formula;
+  document.getElementById('formula-protein-agg-over30-d4').value = formulas.protein.aggression.bmiOver30.day4plus.formula;
+
+  document.getElementById('formula-protein-post-30').value = formulas.protein.postaggression.bmiUnder30.formula;
+  document.getElementById('formula-protein-post-over30').value = formulas.protein.postaggression.bmiOver30.formula;
 
   document.getElementById('formula-cvvhd-amino').value = formulas.cvvhd.aminoAcids.formula;
   document.getElementById('formula-cvvhd-protein').value = formulas.cvvhd.protein.formula;
@@ -352,10 +355,13 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
   calculator.formulas.aminoAcids.bmiOver30.day1to3.formula = document.getElementById('formula-amino-over30-d13').value;
   calculator.formulas.aminoAcids.bmiOver30.day4plus.formula = document.getElementById('formula-amino-over30-d4').value;
 
-  calculator.formulas.protein.bmiUnder30.day1to3.formula = document.getElementById('formula-protein-30-d13').value;
-  calculator.formulas.protein.bmiUnder30.day4plus.formula = document.getElementById('formula-protein-30-d4').value;
-  calculator.formulas.protein.bmiOver30.day1to3.formula = document.getElementById('formula-protein-over30-d13').value;
-  calculator.formulas.protein.bmiOver30.day4plus.formula = document.getElementById('formula-protein-over30-d4').value;
+  calculator.formulas.protein.aggression.bmiUnder30.day1to3.formula = document.getElementById('formula-protein-agg-30-d13').value;
+  calculator.formulas.protein.aggression.bmiUnder30.day4plus.formula = document.getElementById('formula-protein-agg-30-d4').value;
+  calculator.formulas.protein.aggression.bmiOver30.day1to3.formula = document.getElementById('formula-protein-agg-over30-d13').value;
+  calculator.formulas.protein.aggression.bmiOver30.day4plus.formula = document.getElementById('formula-protein-agg-over30-d4').value;
+
+  calculator.formulas.protein.postaggression.bmiUnder30.formula = document.getElementById('formula-protein-post-30').value;
+  calculator.formulas.protein.postaggression.bmiOver30.formula = document.getElementById('formula-protein-post-over30').value;
 
   calculator.formulas.cvvhd.aminoAcids.formula = document.getElementById('formula-cvvhd-amino').value;
   calculator.formulas.cvvhd.protein.formula = document.getElementById('formula-cvvhd-protein').value;

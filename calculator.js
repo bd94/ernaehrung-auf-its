@@ -53,13 +53,19 @@ class NutritionCalculator {
       },
       // Proteinziel
       protein: {
-        bmiUnder30: {
-          day1to3: { formula: '0.75 * 1.0 * weight', description: 'Tag 1-3, BMI <30' },
-          day4plus: { formula: '1.0 * weight', description: 'Ab Tag 4, BMI <30' }
+        aggression: {
+          bmiUnder30: {
+            day1to3: { formula: '0.75 * 1.0 * weight', description: 'Tag 1-3, BMI <30' },
+            day4plus: { formula: '1.0 * weight', description: 'Ab Tag 4, BMI <30' }
+          },
+          bmiOver30: {
+            day1to3: { formula: '0.75 * 1.5 * ibw', description: 'Tag 1-3, BMI >30' },
+            day4plus: { formula: '1.5 * ibw', description: 'Ab Tag 4, BMI >30' }
+          }
         },
-        bmiOver30: {
-          day1to3: { formula: '0.75 * 1.5 * ibw', description: 'Tag 1-3, BMI >30' },
-          day4plus: { formula: '1.5 * ibw', description: 'Ab Tag 4, BMI >30' }
+        postaggression: {
+          bmiUnder30: { formula: '1.0 * weight', description: 'Postaggression, BMI <30' },
+          bmiOver30: { formula: '1.5 * ibw', description: 'Postaggression, BMI >30' }
         }
       },
       // CVVHD-Zuschläge
@@ -128,10 +134,20 @@ class NutritionCalculator {
   calculateProteinGoal(weight, bmi, ibw, phase, day) {
     if (bmi < 30) {
       // BMI <30: 1 g/kg aktuelles Körpergewicht
-      return day <= 3 ? 0.75 * 1.0 * weight : 1.0 * weight;
+      // Tag 1-3 Aggression: 75%, ab Tag 4 oder Postaggression: 100%
+      if (phase === 'aggression' && day <= 3) {
+        return 0.75 * 1.0 * weight;
+      } else {
+        return 1.0 * weight;
+      }
     } else {
       // BMI >30: 1.5 g/kg Idealgewicht
-      return day <= 3 ? 0.75 * 1.5 * ibw : 1.5 * ibw;
+      // Tag 1-3 Aggression: 75%, ab Tag 4 oder Postaggression: 100%
+      if (phase === 'aggression' && day <= 3) {
+        return 0.75 * 1.5 * ibw;
+      } else {
+        return 1.5 * ibw;
+      }
     }
   }
 
