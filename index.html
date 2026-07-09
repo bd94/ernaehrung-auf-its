@@ -196,46 +196,48 @@
           </div>
         </div>
 
-        <h3>Respiratorische Parameter</h3>
+        <h3>Respiratorische Parameter aus laufender Ernährung</h3>
         <div class="results-grid">
           <div class="result-item">
-            <span class="result-label">RQ:</span>
+            <span class="result-label">RQ (berechnet):</span>
             <span id="calorimetry-rq" class="result-value">-</span>
             <span class="result-unit" id="calorimetry-rq-interpretation"></span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">VCO2 (geschätzt):</span>
-            <span id="calorimetry-vco2" class="result-value">-</span>
-            <span class="result-unit">ml/min</span>
           </div>
         </div>
 
         <h3>Indirekte Kalorimetrie - Energieumsatz berechnen</h3>
-        <p class="info">Geben Sie die gemessenen Werte aus der indirekten Kalorimetrie ein:</p>
+        <p class="info">Geben Sie den gemessenen VCO2-Wert vom Beatmungsgerät ein und nutzen Sie den berechneten RQ:</p>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="measured-vo2">VO2 (gemessen):</label>
-            <input type="number" id="measured-vo2" step="1" min="0" placeholder="ml/min">
-          </div>
-          <div class="form-group">
-            <label for="measured-vco2">VCO2 (gemessen):</label>
+            <label for="measured-vco2">VCO2 (gemessen am Beatmungsgerät):</label>
             <input type="number" id="measured-vco2" step="1" min="0" placeholder="ml/min">
           </div>
           <div class="form-group">
-            <label for="urinary-nitrogen">Harnstoff-N (optional):</label>
-            <input type="number" id="urinary-nitrogen" step="0.1" min="0" placeholder="g/24h">
+            <label for="use-calculated-rq">
+              <input type="checkbox" id="use-calculated-rq" checked style="width: auto; margin-right: 8px;">
+              Berechneten RQ verwenden
+            </label>
+          </div>
+          <div class="form-group" id="manual-rq-group" style="display: none;">
+            <label for="manual-rq">RQ (manuell):</label>
+            <input type="number" id="manual-rq" step="0.01" min="0.5" max="1.5" placeholder="0.85">
           </div>
         </div>
 
-        <button id="calculate-ee-btn" class="primary-button">Energieumsatz berechnen</button>
+        <button id="calculate-ee-btn" class="primary-button">Energieumsatz berechnen (VCO2 + RQ)</button>
 
         <div id="ee-results" style="display: none;">
           <h3>Berechneter Energieumsatz</h3>
           <div class="results-grid">
             <div class="result-item">
-              <span class="result-label">Gemessener RQ:</span>
-              <span id="measured-rq" class="result-value">-</span>
+              <span class="result-label">Verwendeter RQ:</span>
+              <span id="used-rq" class="result-value">-</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Berechneter VO2:</span>
+              <span id="calculated-vo2" class="result-value">-</span>
+              <span class="result-unit">ml/min</span>
             </div>
             <div class="result-item">
               <span class="result-label">Energieumsatz (REE):</span>

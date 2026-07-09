@@ -12,6 +12,11 @@ document.getElementById('tab-calculator').addEventListener('click', () => {
 
 document.getElementById('tab-calorimetry').addEventListener('click', () => {
   switchTab('calorimetry');
+  // Stelle sicher, dass Lösungen geladen sind
+  if (solutionManager.getAllSolutions().length === 0) {
+    // Lade Standard-Lösungen falls keine vorhanden
+    loadDefaultSolutions();
+  }
 });
 
 document.getElementById('tab-formulas').addEventListener('click', () => {
@@ -485,6 +490,20 @@ document.getElementById('reset-formulas-btn').addEventListener('click', () => {
 
 // ===== INDIREKTE KALORIMETRIE TAB =====
 
+// Hilfsfunktion: Standard-Lösungen laden
+function loadDefaultSolutions() {
+  // Die Default-Lösungen sind bereits im solutionManager constructor hinterlegt
+  // Diese Funktion stellt sicher, dass sie verfügbar sind
+  if (solutionManager.getAllSolutions().length === 0) {
+    // Fallback: Erstelle neuen Manager mit Defaults
+    const tempManager = new InfusionSolutionManager();
+    tempManager.getAllSolutions().forEach(sol => {
+      solutionManager.addSolution(sol);
+    });
+  }
+  updateSolutionsTable();
+}
+
 // Hinzufügen von Lösungen für Kalorimetrie
 document.getElementById('add-calorimetry-solution').addEventListener('click', () => {
   const container = document.getElementById('calorimetry-solutions-container');
@@ -597,62 +616,87 @@ document.getElementById('calculate-calorimetry-btn').addEventListener('click', (
       interpretation = '(sehr kohlenhydratbetont)';
     }
     document.getElementById('calorimetry-rq-interpretation').textContent = interpretation;
-
-    // Berechne geschätztes VCO2
-    // VCO2 kann aus dem Energieumsatz und RQ geschätzt werden
-    // Vereinfachte Annahme: 1 kcal ≈ 0.2 L O2 bei RQ=0.85
-    // VCO2 = VO2 × RQ
-    const estimatedVO2 = (totalCalories / 1440) * 200; // ml/min (grobe Schätzung)
-    const estimatedVCO2 = estimatedVO2 * rq;
-    document.getElementById('calorimetry-vco2').textContent = Math.round(estimatedVCO2);
   }
 
   document.getElementById('calorimetry-results-section').style.display = 'block';
 });
 
-// Energieumsatz berechnen aus gemessenem VO2 und VCO2
-document.getElementById('calculate-ee-btn').addEventListener('click', () => {
-  const vo2 = parseFloat(document.getElementById('measured-vo2').value);
-  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
-  const urinaryN = parseFloat(document.getElementById('urinary-nitrogen').value) || 0;
+// RQ-Checkbox Handler
+document.getElementById('use-calculated-rq').addEventListener('change', (e) => {
+  document.getElementById('manual-rq-group').style.display = e.target.checked ? 'none' : 'block';
+});
 
-  if (!vo2 || !vco2) {
-    alert('Bitte VO2 und VCO2 eingeben.');
+// Energieumsatz berechnen aus gemessenem VCO2 und RQ
+document.getElementById('calculate-ee-btn').addEventListener('click', () => {
+  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
+
+  if (!vco2) {
+    alert('Bitte VCO2-Wert vom Beatmungsgerät eingeben.');
     return;
   }
 
-  // Berechne gemessenen RQ
-  const measuredRQ = vco2 / vo2;
-  document.getElementById('measured-rq').textContent = measuredRQ.toFixed(2);
+  // RQ verwenden (berechnet oder manuell)
+  let rq;
+  const useCalculatedRQ = document.getElementById('use-calculated-rq').checked;
 
-  // Berechne Energieumsatz mit Weir-Formel
-  // REE (kcal/Tag) = [3.941 × VO2 (L/min) + 1.106 × VCO2 (L/min) - 2.17 × N (g/24h)] × 1440
-  // Oder vereinfachte Version ohne N:
-  // REE (kcal/Tag) = [3.941 × VO2 + 1.106 × VCO2] × 1440
+  if (useCalculatedRQ) {
+    const rqText = document.getElementById('calorimetry-rq').textContent;
+    if (rqText === '-') {
+      alert('Bitte zuerst "RQ und VCO2 berechnen" klicken oder manuellen RQ eingeben.');
+      return;
+    }
+    rq = parseFloat(rqText);
+  } else {
+    rq = parseFloat(document.getElementById('manual-rq').value);
+    if (!rq) {
+      alert('Bitte manuellen RQ-Wert eingeben.');
+      return;
+    }
+  }
+
+  document.getElementById('used-rq').textContent = rq.toFixed(2);
+
+  // Berechne VO2 aus VCO2 und RQ
+  // RQ = VCO2 / VO2  =>  VO2 = VCO2 / RQ
+  const vo2 = vco2 / rq;
+  document.getElementById('calculated-vo2').textContent = Math.round(vo2);
+
+  // Berechne Energieumsatz mit Weir-Formel (vereinfachte Version)
+  // REE (kcal/Tag) = [3.941 × VO2 (L/min) + 1.106 × VCO2 (L/min)] × 1440
   const vo2L = vo2 / 1000; // ml/min -> L/min
   const vco2L = vco2 / 1000; // ml/min -> L/min
 
-  let ree;
-  if (urinaryN > 0) {
-    ree = (3.941 * vo2L + 1.106 * vco2L - 2.17 * urinaryN) * 1440;
-  } else {
-    ree = (3.941 * vo2L + 1.106 * vco2L) * 1440;
-  }
+  const ree = (3.941 * vo2L + 1.106 * vco2L) * 1440;
 
   document.getElementById('calculated-ree').textContent = Math.round(ree);
 
   // Interpretation
-  let interpretation = `Der gemessene Energieumsatz beträgt ${Math.round(ree)} kcal/Tag. `;
-  if (measuredRQ < 0.7) {
-    interpretation += 'Der RQ ist ungewöhnlich niedrig (<0.7), bitte Messung überprüfen.';
-  } else if (measuredRQ > 1.0) {
-    interpretation += 'Der RQ ist >1.0, was auf Lipogenese (Fettaufbau) oder Hyperventilation hindeuten kann.';
-  } else if (measuredRQ < 0.75) {
+  let interpretation = `Der berechnete Energieumsatz beträgt ${Math.round(ree)} kcal/Tag. `;
+  if (rq < 0.7) {
+    interpretation += 'Der RQ ist ungewöhnlich niedrig (<0.7), bitte Werte überprüfen.';
+  } else if (rq > 1.0) {
+    interpretation += 'Der RQ ist >1.0, was auf Lipogenese (Fettaufbau aus Kohlenhydraten) oder Hyperventilation hindeuten kann.';
+  } else if (rq < 0.75) {
     interpretation += 'Ausgeprägte Fettoxidation (ketogener Stoffwechsel).';
-  } else if (measuredRQ < 0.85) {
+  } else if (rq < 0.85) {
     interpretation += 'Gemischte Fett- und Kohlenhydratoxidation.';
   } else {
     interpretation += 'Vorwiegend Kohlenhydratoxidation.';
+  }
+
+  // Vergleich mit eingegebener Ernährung
+  const nutritionCalories = document.getElementById('calorimetry-calories').textContent;
+  if (nutritionCalories !== '-') {
+    const nutritionCal = parseInt(nutritionCalories);
+    const difference = nutritionCal - Math.round(ree);
+    interpretation += `\n\nErnährungszufuhr: ${nutritionCal} kcal/Tag. `;
+    if (Math.abs(difference) < 100) {
+      interpretation += 'Die Ernährung entspricht in etwa dem gemessenen Bedarf.';
+    } else if (difference > 0) {
+      interpretation += `Überernährung um ca. ${difference} kcal/Tag.`;
+    } else {
+      interpretation += `Unterernährung um ca. ${Math.abs(difference)} kcal/Tag.`;
+    }
   }
 
   document.getElementById('ee-interpretation').textContent = interpretation;
