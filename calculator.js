@@ -35,9 +35,13 @@ class NutritionCalculator {
           formula: '32 * weight',
           description: 'Postaggression, BMI <30'
         },
-        bmiOver30: {
-          formula: 'manual',
-          description: 'Manuelle Eingabe bei BMI >30'
+        bmi30to50: {
+          formula: '12 * weight',
+          description: 'Postaggression, BMI 30-50'
+        },
+        bmiOver50: {
+          formula: '24 * ibw',
+          description: 'Postaggression, BMI >50'
         }
       },
       // Aminosäureziel
@@ -83,7 +87,8 @@ class NutritionCalculator {
 
   // IBW berechnen
   calculateIBW(height) {
-    return 48.4 + 77.0 * (height - 1.50);
+    const variables = { height };
+    return this.evaluateFormula(this.formulas.ibw.formula, variables);
   }
 
   // ABW berechnen
@@ -93,19 +98,32 @@ class NutritionCalculator {
 
   // Kalorienziel berechnen
   calculateCalorieGoal(weight, bmi, ibw, phase, day) {
+    const variables = { weight, bmi, ibw, day };
+
     if (phase === 'aggression') {
       if (bmi <= 30) {
-        return day <= 3 ? 18 * weight : 24 * weight;
+        const formula = day <= 3
+          ? this.formulas.caloriesAggression.bmiUnder30.day1to3.formula
+          : this.formulas.caloriesAggression.bmiUnder30.day4plus.formula;
+        return this.evaluateFormula(formula, variables);
       } else if (bmi <= 50) {
-        return day <= 3 ? 0.75 * 12 * weight : 12 * weight;
+        const formula = day <= 3
+          ? this.formulas.caloriesAggression.bmi30to50.day1to3.formula
+          : this.formulas.caloriesAggression.bmi30to50.day4plus.formula;
+        return this.evaluateFormula(formula, variables);
       } else {
-        return day <= 3 ? 0.75 * 24 * ibw : 24 * ibw;
+        const formula = day <= 3
+          ? this.formulas.caloriesAggression.bmiOver50.day1to3.formula
+          : this.formulas.caloriesAggression.bmiOver50.day4plus.formula;
+        return this.evaluateFormula(formula, variables);
       }
     } else if (phase === 'postaggression') {
       if (bmi < 30) {
-        return 32 * weight;
+        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmiUnder30.formula, variables);
+      } else if (bmi <= 50) {
+        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmi30to50.formula, variables);
       } else {
-        return null; // Manuelle Eingabe erforderlich
+        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmiOver50.formula, variables);
       }
     }
     return 0;
@@ -113,52 +131,59 @@ class NutritionCalculator {
 
   // Aminosäureziel berechnen
   calculateAminoAcidGoal(weight, bmi, ibw, phase, day) {
+    const variables = { weight, bmi, ibw, day };
+
     if (bmi <= 30) {
-      // BMI ≤30: Tag 1-3 in Aggression 75% von 1.2*weight, sonst 1.2*weight
+      // BMI ≤30: Tag 1-3 in Aggression 75%, sonst 100%
       if (phase === 'aggression' && day <= 3) {
-        return 0.75 * 1.2 * weight;
+        return this.evaluateFormula(this.formulas.aminoAcids.bmiUnder30.day1to3.formula, variables);
       } else {
-        return 1.2 * weight;
+        return this.evaluateFormula(this.formulas.aminoAcids.bmiUnder30.day4plus.formula, variables);
       }
     } else {
-      // BMI >30: Tag 1-3 in Aggression 75% von 1.8*ibw, sonst 1.8*ibw
+      // BMI >30: Tag 1-3 in Aggression 75%, sonst 100%
       if (phase === 'aggression' && day <= 3) {
-        return 0.75 * 1.8 * ibw;
+        return this.evaluateFormula(this.formulas.aminoAcids.bmiOver30.day1to3.formula, variables);
       } else {
-        return 1.8 * ibw;
+        return this.evaluateFormula(this.formulas.aminoAcids.bmiOver30.day4plus.formula, variables);
       }
     }
   }
 
   // Proteinziel berechnen
   calculateProteinGoal(weight, bmi, ibw, phase, day) {
-    if (bmi < 30) {
-      // BMI <30: 1 g/kg aktuelles Körpergewicht
-      // Tag 1-3 Aggression: 75%, ab Tag 4 oder Postaggression: 100%
-      if (phase === 'aggression' && day <= 3) {
-        return 0.75 * 1.0 * weight;
+    const variables = { weight, bmi, ibw, day };
+
+    if (phase === 'aggression') {
+      if (bmi < 30) {
+        const formula = day <= 3
+          ? this.formulas.protein.aggression.bmiUnder30.day1to3.formula
+          : this.formulas.protein.aggression.bmiUnder30.day4plus.formula;
+        return this.evaluateFormula(formula, variables);
       } else {
-        return 1.0 * weight;
+        const formula = day <= 3
+          ? this.formulas.protein.aggression.bmiOver30.day1to3.formula
+          : this.formulas.protein.aggression.bmiOver30.day4plus.formula;
+        return this.evaluateFormula(formula, variables);
       }
-    } else {
-      // BMI >30: 1.5 g/kg Idealgewicht
-      // Tag 1-3 Aggression: 75%, ab Tag 4 oder Postaggression: 100%
-      if (phase === 'aggression' && day <= 3) {
-        return 0.75 * 1.5 * ibw;
+    } else if (phase === 'postaggression') {
+      if (bmi < 30) {
+        return this.evaluateFormula(this.formulas.protein.postaggression.bmiUnder30.formula, variables);
       } else {
-        return 1.5 * ibw;
+        return this.evaluateFormula(this.formulas.protein.postaggression.bmiOver30.formula, variables);
       }
     }
+    return 0;
   }
 
   // CVVHD-Zuschlag für Aminosäuren
   calculateCVVHDAminoAcidAddition() {
-    return 0.6 * 24; // 0.6 g/h * 24h = 14.4 g
+    return this.evaluateFormula(this.formulas.cvvhd.aminoAcids.formula, {});
   }
 
   // CVVHD-Zuschlag für Protein
   calculateCVVHDProteinAddition() {
-    return 0.5 * 24; // 0.5 g/h * 24h = 12 g
+    return this.evaluateFormula(this.formulas.cvvhd.protein.formula, {});
   }
 
   // Evaluiert eine Formel mit gegebenen Variablen
@@ -381,6 +406,8 @@ class InfusionRateCalculator {
     let totalCalories = 0;
     let totalAminoAcids = 0;
     let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
 
     for (const running of runningSolutions) {
       const solution = this.solutionManager.findSolution(running.name);
@@ -389,10 +416,18 @@ class InfusionRateCalculator {
         totalCalories += solution.kcalPerMl * mlPerDay;
         totalAminoAcids += this.solutionManager.getTotalAminoAcidEquivalent(solution, mlPerDay);
         totalProtein += this.solutionManager.getTotalProteinEquivalent(solution, mlPerDay);
+        totalCarbs += solution.carbohydratesPerMl * mlPerDay;
+        totalFat += solution.fatPerMl * mlPerDay;
       }
     }
 
-    return { calories: totalCalories, aminoAcids: totalAminoAcids, protein: totalProtein };
+    return {
+      calories: totalCalories,
+      aminoAcids: totalAminoAcids,
+      protein: totalProtein,
+      carbs: totalCarbs,
+      fat: totalFat
+    };
   }
 
   // Prüft ob eine Lösung eine Mischlösung ist (enthält sowohl KH als auch Fett)

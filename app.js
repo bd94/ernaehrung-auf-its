@@ -10,6 +10,10 @@ document.getElementById('tab-calculator').addEventListener('click', () => {
   switchTab('calculator');
 });
 
+document.getElementById('tab-calorimetry').addEventListener('click', () => {
+  switchTab('calorimetry');
+});
+
 document.getElementById('tab-formulas').addEventListener('click', () => {
   switchTab('formulas');
   loadFormulasToUI();
@@ -295,11 +299,101 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
       ratesResults.appendChild(div);
     });
 
+    // Berechne tatsächliche Aufnahme durch geplante Infusionen
+    let plannedCalories = 0;
+    let plannedProtein = 0;
+    let plannedAminoAcids = 0;
+    let plannedCarbs = 0;
+    let plannedFat = 0;
+
+    requiredRates.forEach(rate => {
+      const solution = solutionManager.findSolution(rate.name);
+      if (solution) {
+        plannedCalories += solution.kcalPerMl * rate.mlPerDay;
+        plannedProtein += solutionManager.getTotalProteinEquivalent(solution, rate.mlPerDay);
+        plannedAminoAcids += solutionManager.getTotalAminoAcidEquivalent(solution, rate.mlPerDay);
+        plannedCarbs += solution.carbohydratesPerMl * rate.mlPerDay;
+        plannedFat += solution.fatPerMl * rate.mlPerDay;
+      }
+    });
+
+    // Zeige geplante Aufnahme an
+    document.getElementById('planned-calories').textContent = Math.round(plannedCalories);
+    document.getElementById('planned-protein').textContent = plannedProtein.toFixed(1);
+    document.getElementById('planned-amino').textContent = plannedAminoAcids.toFixed(1);
+
+    // Berechne Gesamtaufnahme (laufend + geplant)
+    const totalCalories = currentIntake.calories + plannedCalories;
+    const totalProtein = currentIntake.protein + plannedProtein;
+    const totalAminoAcids = currentIntake.aminoAcids + plannedAminoAcids;
+    const totalCarbs = (currentIntake.carbs || 0) + plannedCarbs;
+    const totalFat = (currentIntake.fat || 0) + plannedFat;
+
+    document.getElementById('total-calories').textContent = Math.round(totalCalories);
+    document.getElementById('total-protein').textContent = totalProtein.toFixed(1);
+    document.getElementById('total-amino').textContent = totalAminoAcids.toFixed(1);
+
+    // Berechne Respiratorischen Quotienten (RQ)
+    // RQ-Werte: Kohlenhydrate = 1.0, Fett = 0.7, Protein = 0.81
+    // Berechnung basierend auf Kalorieanteilen
+    const carbCalories = totalCarbs * 4;  // 1g KH = 4 kcal
+    const fatCalories = totalFat * 9;     // 1g Fett = 9 kcal
+    const proteinCalories = totalProtein * 4;  // 1g Protein = 4 kcal
+
+    if (totalCalories > 0) {
+      const rq = (carbCalories * 1.0 + fatCalories * 0.7 + proteinCalories * 0.81) / totalCalories;
+      document.getElementById('respiratory-quotient').textContent = rq.toFixed(2);
+
+      // Interpretation des RQ
+      let interpretation = '';
+      if (rq < 0.75) {
+        interpretation = '(sehr fettbetont)';
+      } else if (rq < 0.82) {
+        interpretation = '(fettbetont)';
+      } else if (rq < 0.88) {
+        interpretation = '(ausgewogen)';
+      } else if (rq < 0.95) {
+        interpretation = '(kohlenhydratbetont)';
+      } else {
+        interpretation = '(sehr kohlenhydratbetont)';
+      }
+      document.getElementById('rq-interpretation').textContent = interpretation;
+    } else {
+      document.getElementById('respiratory-quotient').textContent = '-';
+      document.getElementById('rq-interpretation').textContent = '';
+    }
+
+    // Vergleich mit Zielen
+    const calDiff = totalCalories - targetCalories;
+    const proteinDiff = totalProtein - targetProtein;
+    const aminoDiff = totalAminoAcids - targetAminoAcids;
+
+    updateComparison('total-cal-comparison', calDiff, 'kcal');
+    updateComparison('total-protein-comparison', proteinDiff, 'g');
+    updateComparison('total-amino-comparison', aminoDiff, 'g');
+
     document.getElementById('rates-section').style.display = 'block';
   } else {
     alert('Fehler bei der Berechnung der Laufraten. Bitte Eingaben überprüfen.');
   }
 });
+
+// Hilfsfunktion für Vergleichsanzeige
+function updateComparison(elementId, difference, unit) {
+  const element = document.getElementById(elementId);
+  const absDiff = Math.abs(difference);
+
+  if (Math.abs(difference) < 0.5) {
+    element.textContent = '✓ Ziel erreicht';
+    element.className = 'goal-comparison exact';
+  } else if (difference > 0) {
+    element.textContent = `(+${absDiff.toFixed(1)} ${unit} über Ziel)`;
+    element.className = 'goal-comparison over';
+  } else {
+    element.textContent = `(-${absDiff.toFixed(1)} ${unit} unter Ziel)`;
+    element.className = 'goal-comparison under';
+  }
+}
 
 // Formeln laden
 function loadFormulasToUI() {
@@ -317,6 +411,8 @@ function loadFormulasToUI() {
   document.getElementById('formula-cal-agg-50-d4').value = formulas.caloriesAggression.bmiOver50.day4plus.formula;
 
   document.getElementById('formula-cal-post-30').value = formulas.caloriesPostaggression.bmiUnder30.formula;
+  document.getElementById('formula-cal-post-3050').value = formulas.caloriesPostaggression.bmi30to50.formula;
+  document.getElementById('formula-cal-post-50').value = formulas.caloriesPostaggression.bmiOver50.formula;
 
   document.getElementById('formula-amino-30-d13').value = formulas.aminoAcids.bmiUnder30.day1to3.formula;
   document.getElementById('formula-amino-30-d4').value = formulas.aminoAcids.bmiUnder30.day4plus.formula;
@@ -349,6 +445,8 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
   calculator.formulas.caloriesAggression.bmiOver50.day4plus.formula = document.getElementById('formula-cal-agg-50-d4').value;
 
   calculator.formulas.caloriesPostaggression.bmiUnder30.formula = document.getElementById('formula-cal-post-30').value;
+  calculator.formulas.caloriesPostaggression.bmi30to50.formula = document.getElementById('formula-cal-post-3050').value;
+  calculator.formulas.caloriesPostaggression.bmiOver50.formula = document.getElementById('formula-cal-post-50').value;
 
   calculator.formulas.aminoAcids.bmiUnder30.day1to3.formula = document.getElementById('formula-amino-30-d13').value;
   calculator.formulas.aminoAcids.bmiUnder30.day4plus.formula = document.getElementById('formula-amino-30-d4').value;
@@ -383,6 +481,182 @@ document.getElementById('reset-formulas-btn').addEventListener('click', () => {
     localStorage.removeItem('formulas');
     alert('Formeln wurden zurückgesetzt.');
   }
+});
+
+// ===== INDIREKTE KALORIMETRIE TAB =====
+
+// Hinzufügen von Lösungen für Kalorimetrie
+document.getElementById('add-calorimetry-solution').addEventListener('click', () => {
+  const container = document.getElementById('calorimetry-solutions-container');
+  const solutionRow = createCalorimetrySolutionRow();
+  container.insertBefore(solutionRow, container.querySelector('button'));
+});
+
+function createCalorimetrySolutionRow() {
+  const div = document.createElement('div');
+  div.className = 'solution-row';
+
+  const select = document.createElement('select');
+  select.className = 'solution-select';
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Lösung auswählen...';
+  select.appendChild(defaultOption);
+
+  solutionManager.getAllSolutions().forEach(solution => {
+    const option = document.createElement('option');
+    option.value = solution.name;
+    option.textContent = solution.name;
+    select.appendChild(option);
+  });
+
+  const rateInput = document.createElement('input');
+  rateInput.type = 'number';
+  rateInput.className = 'rate-input';
+  rateInput.placeholder = 'Laufrate (ml/h)';
+  rateInput.step = '0.1';
+  rateInput.min = '0';
+
+  const removeBtn = document.createElement('button');
+  removeBtn.textContent = '✕';
+  removeBtn.className = 'remove-button';
+  removeBtn.addEventListener('click', () => {
+    div.remove();
+  });
+
+  div.appendChild(select);
+  div.appendChild(rateInput);
+  div.appendChild(removeBtn);
+
+  return div;
+}
+
+// RQ und VCO2 berechnen
+document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
+  const calorimetrySolutions = [];
+  document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
+    const select = row.querySelector('.solution-select');
+    const rateInput = row.querySelector('.rate-input');
+    if (select.value && rateInput.value) {
+      calorimetrySolutions.push({
+        name: select.value,
+        ratePerHour: parseFloat(rateInput.value)
+      });
+    }
+  });
+
+  if (calorimetrySolutions.length === 0) {
+    alert('Bitte mindestens eine laufende Infusion eingeben.');
+    return;
+  }
+
+  // Berechne Nährstoffaufnahme
+  let totalCalories = 0;
+  let totalCarbs = 0;
+  let totalFat = 0;
+  let totalProtein = 0;
+
+  calorimetrySolutions.forEach(sol => {
+    const solution = solutionManager.findSolution(sol.name);
+    if (solution) {
+      const mlPerDay = sol.ratePerHour * 24;
+      totalCalories += solution.kcalPerMl * mlPerDay;
+      totalCarbs += solution.carbohydratesPerMl * mlPerDay;
+      totalFat += solution.fatPerMl * mlPerDay;
+      totalProtein += solutionManager.getTotalProteinEquivalent(solution, mlPerDay);
+    }
+  });
+
+  // Zeige Nährstoffwerte an
+  document.getElementById('calorimetry-calories').textContent = Math.round(totalCalories);
+  document.getElementById('calorimetry-carbs').textContent = totalCarbs.toFixed(1);
+  document.getElementById('calorimetry-fat').textContent = totalFat.toFixed(1);
+  document.getElementById('calorimetry-protein').textContent = totalProtein.toFixed(1);
+
+  // Berechne RQ
+  const carbCalories = totalCarbs * 4;
+  const fatCalories = totalFat * 9;
+  const proteinCalories = totalProtein * 4;
+
+  if (totalCalories > 0) {
+    const rq = (carbCalories * 1.0 + fatCalories * 0.7 + proteinCalories * 0.81) / totalCalories;
+    document.getElementById('calorimetry-rq').textContent = rq.toFixed(2);
+
+    // Interpretation
+    let interpretation = '';
+    if (rq < 0.75) {
+      interpretation = '(sehr fettbetont)';
+    } else if (rq < 0.82) {
+      interpretation = '(fettbetont)';
+    } else if (rq < 0.88) {
+      interpretation = '(ausgewogen)';
+    } else if (rq < 0.95) {
+      interpretation = '(kohlenhydratbetont)';
+    } else {
+      interpretation = '(sehr kohlenhydratbetont)';
+    }
+    document.getElementById('calorimetry-rq-interpretation').textContent = interpretation;
+
+    // Berechne geschätztes VCO2
+    // VCO2 kann aus dem Energieumsatz und RQ geschätzt werden
+    // Vereinfachte Annahme: 1 kcal ≈ 0.2 L O2 bei RQ=0.85
+    // VCO2 = VO2 × RQ
+    const estimatedVO2 = (totalCalories / 1440) * 200; // ml/min (grobe Schätzung)
+    const estimatedVCO2 = estimatedVO2 * rq;
+    document.getElementById('calorimetry-vco2').textContent = Math.round(estimatedVCO2);
+  }
+
+  document.getElementById('calorimetry-results-section').style.display = 'block';
+});
+
+// Energieumsatz berechnen aus gemessenem VO2 und VCO2
+document.getElementById('calculate-ee-btn').addEventListener('click', () => {
+  const vo2 = parseFloat(document.getElementById('measured-vo2').value);
+  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
+  const urinaryN = parseFloat(document.getElementById('urinary-nitrogen').value) || 0;
+
+  if (!vo2 || !vco2) {
+    alert('Bitte VO2 und VCO2 eingeben.');
+    return;
+  }
+
+  // Berechne gemessenen RQ
+  const measuredRQ = vco2 / vo2;
+  document.getElementById('measured-rq').textContent = measuredRQ.toFixed(2);
+
+  // Berechne Energieumsatz mit Weir-Formel
+  // REE (kcal/Tag) = [3.941 × VO2 (L/min) + 1.106 × VCO2 (L/min) - 2.17 × N (g/24h)] × 1440
+  // Oder vereinfachte Version ohne N:
+  // REE (kcal/Tag) = [3.941 × VO2 + 1.106 × VCO2] × 1440
+  const vo2L = vo2 / 1000; // ml/min -> L/min
+  const vco2L = vco2 / 1000; // ml/min -> L/min
+
+  let ree;
+  if (urinaryN > 0) {
+    ree = (3.941 * vo2L + 1.106 * vco2L - 2.17 * urinaryN) * 1440;
+  } else {
+    ree = (3.941 * vo2L + 1.106 * vco2L) * 1440;
+  }
+
+  document.getElementById('calculated-ree').textContent = Math.round(ree);
+
+  // Interpretation
+  let interpretation = `Der gemessene Energieumsatz beträgt ${Math.round(ree)} kcal/Tag. `;
+  if (measuredRQ < 0.7) {
+    interpretation += 'Der RQ ist ungewöhnlich niedrig (<0.7), bitte Messung überprüfen.';
+  } else if (measuredRQ > 1.0) {
+    interpretation += 'Der RQ ist >1.0, was auf Lipogenese (Fettaufbau) oder Hyperventilation hindeuten kann.';
+  } else if (measuredRQ < 0.75) {
+    interpretation += 'Ausgeprägte Fettoxidation (ketogener Stoffwechsel).';
+  } else if (measuredRQ < 0.85) {
+    interpretation += 'Gemischte Fett- und Kohlenhydratoxidation.';
+  } else {
+    interpretation += 'Vorwiegend Kohlenhydratoxidation.';
+  }
+
+  document.getElementById('ee-interpretation').textContent = interpretation;
+  document.getElementById('ee-results').style.display = 'block';
 });
 
 // CSV importieren (Browser File API)

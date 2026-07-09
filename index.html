@@ -12,6 +12,7 @@
       <h1>Ernährung auf ITS - Infusionsraten-Kalkulator</h1>
       <nav>
         <button id="tab-calculator" class="tab-button active">Kalkulator</button>
+        <button id="tab-calorimetry" class="tab-button">Indirekte Kalorimetrie</button>
         <button id="tab-formulas" class="tab-button">Formeln</button>
         <button id="tab-solutions" class="tab-button">Lösungen</button>
       </nav>
@@ -139,6 +140,111 @@
           <h3>Erforderliche Laufraten (geplante Infusionen)</h3>
           <div id="rates-results"></div>
         </div>
+        <div id="planned-intake">
+          <h3>Aufnahme durch geplante Infusionen</h3>
+          <p>Kalorien: <strong id="planned-calories">0</strong> kcal/Tag</p>
+          <p>Protein: <strong id="planned-protein">0</strong> g/Tag</p>
+          <p>Aminosäuren: <strong id="planned-amino">0</strong> g/Tag</p>
+        </div>
+        <div id="total-intake">
+          <h3>Gesamtaufnahme (laufend + geplant)</h3>
+          <p>Kalorien: <strong id="total-calories">0</strong> kcal/Tag <span class="goal-comparison" id="total-cal-comparison"></span></p>
+          <p>Protein: <strong id="total-protein">0</strong> g/Tag <span class="goal-comparison" id="total-protein-comparison"></span></p>
+          <p>Aminosäuren: <strong id="total-amino">0</strong> g/Tag <span class="goal-comparison" id="total-amino-comparison"></span></p>
+          <p>Respiratorischer Quotient (RQ): <strong id="respiratory-quotient">-</strong> <span class="rq-info" id="rq-interpretation"></span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Indirekte Kalorimetrie -->
+    <div id="calorimetry-tab" class="tab-content">
+      <div class="section">
+        <h2>Indirekte Kalorimetrie</h2>
+        <p class="info">Berechnung des Energieumsatzes basierend auf laufender Ernährung und Gasaustausch (VO2, VCO2).</p>
+
+        <h3>Laufende Ernährung</h3>
+        <div id="calorimetry-solutions-container">
+          <button id="add-calorimetry-solution" class="secondary-button">+ Laufende Infusion hinzufügen</button>
+        </div>
+
+        <button id="calculate-calorimetry-btn" class="primary-button">RQ und VCO2 berechnen</button>
+      </div>
+
+      <div class="section" id="calorimetry-results-section" style="display: none;">
+        <h2>Berechnete Werte</h2>
+
+        <div class="results-grid">
+          <div class="result-item">
+            <span class="result-label">Gesamtkalorien:</span>
+            <span id="calorimetry-calories" class="result-value">-</span>
+            <span class="result-unit">kcal/Tag</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Kohlenhydrate:</span>
+            <span id="calorimetry-carbs" class="result-value">-</span>
+            <span class="result-unit">g/Tag</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Fett:</span>
+            <span id="calorimetry-fat" class="result-value">-</span>
+            <span class="result-unit">g/Tag</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Protein:</span>
+            <span id="calorimetry-protein" class="result-value">-</span>
+            <span class="result-unit">g/Tag</span>
+          </div>
+        </div>
+
+        <h3>Respiratorische Parameter</h3>
+        <div class="results-grid">
+          <div class="result-item">
+            <span class="result-label">RQ:</span>
+            <span id="calorimetry-rq" class="result-value">-</span>
+            <span class="result-unit" id="calorimetry-rq-interpretation"></span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">VCO2 (geschätzt):</span>
+            <span id="calorimetry-vco2" class="result-value">-</span>
+            <span class="result-unit">ml/min</span>
+          </div>
+        </div>
+
+        <h3>Indirekte Kalorimetrie - Energieumsatz berechnen</h3>
+        <p class="info">Geben Sie die gemessenen Werte aus der indirekten Kalorimetrie ein:</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="measured-vo2">VO2 (gemessen):</label>
+            <input type="number" id="measured-vo2" step="1" min="0" placeholder="ml/min">
+          </div>
+          <div class="form-group">
+            <label for="measured-vco2">VCO2 (gemessen):</label>
+            <input type="number" id="measured-vco2" step="1" min="0" placeholder="ml/min">
+          </div>
+          <div class="form-group">
+            <label for="urinary-nitrogen">Harnstoff-N (optional):</label>
+            <input type="number" id="urinary-nitrogen" step="0.1" min="0" placeholder="g/24h">
+          </div>
+        </div>
+
+        <button id="calculate-ee-btn" class="primary-button">Energieumsatz berechnen</button>
+
+        <div id="ee-results" style="display: none;">
+          <h3>Berechneter Energieumsatz</h3>
+          <div class="results-grid">
+            <div class="result-item">
+              <span class="result-label">Gemessener RQ:</span>
+              <span id="measured-rq" class="result-value">-</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Energieumsatz (REE):</span>
+              <span id="calculated-ree" class="result-value">-</span>
+              <span class="result-unit">kcal/Tag</span>
+            </div>
+          </div>
+          <p class="info" id="ee-interpretation"></p>
+        </div>
       </div>
     </div>
 
@@ -176,6 +282,10 @@
           <h3>Kalorienziel Postaggression</h3>
           <label>BMI <30:</label>
           <input type="text" id="formula-cal-post-30" class="formula-input">
+          <label>BMI 30-50:</label>
+          <input type="text" id="formula-cal-post-3050" class="formula-input">
+          <label>BMI >50:</label>
+          <input type="text" id="formula-cal-post-50" class="formula-input">
 
           <h3>Aminosäureziel</h3>
           <h4>BMI ≤30</h4>

@@ -227,6 +227,31 @@ nav {
   font-style: italic;
 }
 
+.goal-comparison {
+  font-size: 13px;
+  margin-left: 10px;
+  font-weight: normal;
+}
+
+.goal-comparison.over {
+  color: #28a745;
+}
+
+.goal-comparison.under {
+  color: #dc3545;
+}
+
+.goal-comparison.exact {
+  color: #667eea;
+}
+
+.rq-info {
+  font-size: 13px;
+  margin-left: 10px;
+  font-style: italic;
+  color: #666;
+}
+
 .goals-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
