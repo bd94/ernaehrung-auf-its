@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Version Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="test-box">
+    <h1>Version Check - Indirekte Kalorimetrie</h1>
+    <p>Diese Testseite überprüft, ob die aktualisierten Dateien geladen wurden.</p>
+    <p><strong>Erwartete Version:</strong> 2026-07-10 mit Indirekte Kalorimetrie Tab</p>
+  </div>
+
+  <div class="test-box" id="results">
+    <h2>Test-Ergebnisse:</h2>
+    <div id="test-output"></div>
+  </div>
+
+  <script src="calculator.js"></script>
+  <script>
+    const output = document.getElementById('test-output');
+    let tests = [];
+
+    // Test 1: NutritionCalculator lädt
+    try {
+      const calc = new NutritionCalculator();
+      tests.push('<p class="success">✓ NutritionCalculator geladen</p>');
+
+      // Test 2: Protein-Formeln existieren
+      if (calc.formulas.protein && calc.formulas.protein.aggression) {
+        tests.push('<p class="success">✓ Protein-Formeln vorhanden</p>');
+      } else {
+        tests.push('<p class="error">✗ Protein-Formeln FEHLEN</p>');
+      }
+
+      // Test 3: CVVHD-Formeln existieren
+      if (calc.formulas.cvvhd) {
+        tests.push('<p class="success">✓ CVVHD-Formeln vorhanden</p>');
+      } else {
+        tests.push('<p class="error">✗ CVVHD-Formeln FEHLEN</p>');
+      }
+    } catch (e) {
+      tests.push('<p class="error">✗ NutritionCalculator FEHLER: ' + e.message + '</p>');
+    }
+
+    // Test 4: InfusionSolutionManager lädt
+    try {
+      const solMgr = new InfusionSolutionManager();
+      const solutions = solMgr.getAllSolutions();
+      tests.push('<p class="success">✓ InfusionSolutionManager geladen (' + solutions.length + ' Lösungen)</p>');
+
+      // Test 5: Glucose 40% vorhanden
+      const glucose40 = solutions.find(s => s.name === 'Glucose 40%');
+      if (glucose40) {
+        tests.push('<p class="success">✓ Glucose 40% vorhanden (kcal: ' + glucose40.kcalPerMl + ')</p>');
+      } else {
+        tests.push('<p class="error">✗ Glucose 40% FEHLT</p>');
+      }
+
+      // Test 6: Survimed OPD vorhanden
+      const survimedOPD = solutions.find(s => s.name === 'Survimed OPD');
+      if (survimedOPD) {
+        tests.push('<p class="success">✓ Survimed OPD vorhanden</p>');
+      } else {
+        tests.push('<p class="error">✗ Survimed OPD FEHLT</p>');
+      }
+
+      // Test 7: Survimed OPD HN vorhanden
+      const survimedOPDHN = solutions.find(s => s.name === 'Survimed OPD HN');
+      if (survimedOPDHN) {
+        tests.push('<p class="success">✓ Survimed OPD HN vorhanden</p>');
+      } else {
+        tests.push('<p class="error">✗ Survimed OPD HN FEHLT</p>');
+      }
+    } catch (e) {
+      tests.push('<p class="error">✗ InfusionSolutionManager FEHLER: ' + e.message + '</p>');
+    }
+
+    // Test 8: index.html hat Calorimetry Tab
+    fetch('index.html')
+      .then(response => response.text())
+      .then(html => {
+        if (html.includes('tab-calorimetry')) {
+          tests.push('<p class="success">✓ index.html enthält Calorimetry Tab</p>');
+        } else {
+          tests.push('<p class="error">✗ index.html enthält KEINEN Calorimetry Tab</p>');
+        }
+
+        if (html.includes('measured-vco2')) {
+          tests.push('<p class="success">✓ index.html enthält VCO2 Input</p>');
+        } else {
+          tests.push('<p class="error">✗ index.html enthält KEINEN VCO2 Input</p>');
+        }
+
+        output.innerHTML = tests.join('');
+      })
+      .catch(e => {
+        tests.push('<p class="error">✗ Konnte index.html nicht laden: ' + e.message + '</p>');
+        output.innerHTML = tests.join('');
+      });
+
+    output.innerHTML = tests.join('') + '<p>Lade index.html...</p>';
+  </script>
+</body>
+</html>
