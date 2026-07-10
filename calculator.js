@@ -2,6 +2,9 @@
 
 class NutritionCalculator {
   constructor() {
+    // Umrechnungsfaktor: Protein zu Aminosäuren
+    this.proteinToAminoAcidFactor = 1.2;
+
     // Default-Formeln
     this.formulas = {
       ibw: {
