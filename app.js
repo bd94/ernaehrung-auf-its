@@ -844,16 +844,53 @@ function displaySolutions(solutions) {
   });
 }
 
+// Hilfsfunktion: Merge gespeicherte Formeln mit Default-Formeln
+function mergeFormulas(defaultFormulas, savedFormulas) {
+  // Deep merge: Nimm gespeicherte Werte, fülle fehlende mit Defaults
+  const merged = JSON.parse(JSON.stringify(defaultFormulas)); // Deep copy
+
+  function deepMerge(target, source) {
+    for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          if (!target[key]) target[key] = {};
+          deepMerge(target[key], source[key]);
+        } else {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  }
+
+  return deepMerge(merged, savedFormulas);
+}
+
 // Beim Start: Gespeicherte Daten laden
 (function initApp() {
   // Gespeicherte Formeln laden
   try {
     const savedFormulas = localStorage.getItem('formulas');
     if (savedFormulas) {
-      calculator.formulas = JSON.parse(savedFormulas);
+      const parsed = JSON.parse(savedFormulas);
+      // Merge mit Default-Formeln, um fehlende Formeln zu ergänzen
+      calculator.formulas = mergeFormulas(calculator.formulas, parsed);
+      console.log('Formeln aus LocalStorage geladen und gemerged');
     }
   } catch (error) {
     console.error('Fehler beim Laden der Formeln:', error);
+    // Bei Fehler: Verwende Default-Formeln
+    localStorage.removeItem('formulas');
+  }
+
+  // Gespeicherten Umrechnungsfaktor laden
+  try {
+    const savedFactor = localStorage.getItem('proteinToAminoAcidFactor');
+    if (savedFactor) {
+      calculator.proteinToAminoAcidFactor = parseFloat(savedFactor);
+    }
+  } catch (error) {
+    console.error('Fehler beim Laden des Umrechnungsfaktors:', error);
   }
 
   // Gespeicherte Lösungen laden (oder Default-Lösungen anzeigen)

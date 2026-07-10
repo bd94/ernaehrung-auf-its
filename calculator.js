@@ -103,31 +103,51 @@ class NutritionCalculator {
   calculateCalorieGoal(weight, bmi, ibw, phase, day) {
     const variables = { weight, bmi, ibw, day };
 
-    if (phase === 'aggression') {
-      if (bmi <= 30) {
-        const formula = day <= 3
-          ? this.formulas.caloriesAggression.bmiUnder30.day1to3.formula
-          : this.formulas.caloriesAggression.bmiUnder30.day4plus.formula;
-        return this.evaluateFormula(formula, variables);
-      } else if (bmi <= 50) {
-        const formula = day <= 3
-          ? this.formulas.caloriesAggression.bmi30to50.day1to3.formula
-          : this.formulas.caloriesAggression.bmi30to50.day4plus.formula;
-        return this.evaluateFormula(formula, variables);
-      } else {
-        const formula = day <= 3
-          ? this.formulas.caloriesAggression.bmiOver50.day1to3.formula
-          : this.formulas.caloriesAggression.bmiOver50.day4plus.formula;
-        return this.evaluateFormula(formula, variables);
+    try {
+      if (phase === 'aggression') {
+        if (bmi <= 30) {
+          const formula = day <= 3
+            ? this.formulas.caloriesAggression.bmiUnder30.day1to3.formula
+            : this.formulas.caloriesAggression.bmiUnder30.day4plus.formula;
+          return this.evaluateFormula(formula, variables);
+        } else if (bmi <= 50) {
+          const formula = day <= 3
+            ? this.formulas.caloriesAggression.bmi30to50.day1to3.formula
+            : this.formulas.caloriesAggression.bmi30to50.day4plus.formula;
+          return this.evaluateFormula(formula, variables);
+        } else {
+          const formula = day <= 3
+            ? this.formulas.caloriesAggression.bmiOver50.day1to3.formula
+            : this.formulas.caloriesAggression.bmiOver50.day4plus.formula;
+          return this.evaluateFormula(formula, variables);
+        }
+      } else if (phase === 'postaggression') {
+        if (bmi < 30) {
+          const formulaObj = this.formulas.caloriesPostaggression.bmiUnder30;
+          if (!formulaObj || !formulaObj.formula) {
+            console.error('Formel nicht gefunden: caloriesPostaggression.bmiUnder30', this.formulas.caloriesPostaggression);
+            throw new Error('Formel für Postaggression BMI <30 nicht gefunden');
+          }
+          return this.evaluateFormula(formulaObj.formula, variables);
+        } else if (bmi <= 50) {
+          const formulaObj = this.formulas.caloriesPostaggression.bmi30to50;
+          if (!formulaObj || !formulaObj.formula) {
+            console.error('Formel nicht gefunden: caloriesPostaggression.bmi30to50', this.formulas.caloriesPostaggression);
+            throw new Error('Formel für Postaggression BMI 30-50 nicht gefunden');
+          }
+          return this.evaluateFormula(formulaObj.formula, variables);
+        } else {
+          const formulaObj = this.formulas.caloriesPostaggression.bmiOver50;
+          if (!formulaObj || !formulaObj.formula) {
+            console.error('Formel nicht gefunden: caloriesPostaggression.bmiOver50', this.formulas.caloriesPostaggression);
+            throw new Error('Formel für Postaggression BMI >50 nicht gefunden');
+          }
+          return this.evaluateFormula(formulaObj.formula, variables);
+        }
       }
-    } else if (phase === 'postaggression') {
-      if (bmi < 30) {
-        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmiUnder30.formula, variables);
-      } else if (bmi <= 50) {
-        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmi30to50.formula, variables);
-      } else {
-        return this.evaluateFormula(this.formulas.caloriesPostaggression.bmiOver50.formula, variables);
-      }
+    } catch (error) {
+      console.error('Fehler in calculateCalorieGoal:', error, 'formulas:', this.formulas);
+      throw error;
     }
     return 0;
   }
