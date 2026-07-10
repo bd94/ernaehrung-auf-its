@@ -419,6 +419,8 @@ function loadFormulasToUI() {
   const formulas = calculator.formulas;
 
   document.getElementById('formula-ibw').value = formulas.ibw.formula;
+  document.getElementById('formula-abw').value = formulas.abw.formula;
+  document.getElementById('formula-protein-to-amino-factor').value = calculator.proteinToAminoAcidFactor;
 
   document.getElementById('formula-cal-agg-30-d13').value = formulas.caloriesAggression.bmiUnder30.day1to3.formula;
   document.getElementById('formula-cal-agg-30-d4').value = formulas.caloriesAggression.bmiUnder30.day4plus.formula;
@@ -453,6 +455,8 @@ function loadFormulasToUI() {
 // Formeln speichern (LocalStorage statt Electron IPC)
 document.getElementById('save-formulas-btn').addEventListener('click', () => {
   calculator.formulas.ibw.formula = document.getElementById('formula-ibw').value;
+  calculator.formulas.abw.formula = document.getElementById('formula-abw').value;
+  calculator.proteinToAminoAcidFactor = parseFloat(document.getElementById('formula-protein-to-amino-factor').value);
 
   calculator.formulas.caloriesAggression.bmiUnder30.day1to3.formula = document.getElementById('formula-cal-agg-30-d13').value;
   calculator.formulas.caloriesAggression.bmiUnder30.day4plus.formula = document.getElementById('formula-cal-agg-30-d4').value;
@@ -486,6 +490,7 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
   // LocalStorage speichern
   try {
     localStorage.setItem('formulas', JSON.stringify(calculator.formulas));
+    localStorage.setItem('proteinToAminoAcidFactor', calculator.proteinToAminoAcidFactor);
     alert('Formeln erfolgreich gespeichert!');
   } catch (error) {
     alert('Fehler beim Speichern der Formeln: ' + error.message);
@@ -495,9 +500,12 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
 // Formeln zurücksetzen
 document.getElementById('reset-formulas-btn').addEventListener('click', () => {
   if (confirm('Möchten Sie wirklich alle Formeln auf die Standardwerte zurücksetzen?')) {
-    calculator.formulas = new NutritionCalculator().formulas;
+    const defaultCalc = new NutritionCalculator();
+    calculator.formulas = defaultCalc.formulas;
+    calculator.proteinToAminoAcidFactor = defaultCalc.proteinToAminoAcidFactor;
     loadFormulasToUI();
     localStorage.removeItem('formulas');
+    localStorage.removeItem('proteinToAminoAcidFactor');
     alert('Formeln wurden zurückgesetzt.');
   }
 });

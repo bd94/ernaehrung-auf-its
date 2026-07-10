@@ -93,7 +93,7 @@ class NutritionCalculator {
 
   // ABW berechnen
   calculateABW(weight, ibw) {
-    return 0.25 * (weight - ibw) + ibw;
+    return this.evaluateFormula(this.formulas.abw.formula, { weight, ibw });
   }
 
   // Kalorienziel berechnen
