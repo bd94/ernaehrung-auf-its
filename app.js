@@ -336,11 +336,6 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
       }
     });
 
-    // Zeige geplante Aufnahme an
-    document.getElementById('planned-calories').textContent = Math.round(plannedCalories);
-    document.getElementById('planned-protein').textContent = plannedProtein.toFixed(1);
-    document.getElementById('planned-amino').textContent = plannedAminoAcids.toFixed(1);
-
     // Berechne Gesamtaufnahme (laufend + geplant)
     const totalCalories = currentIntake.calories + plannedCalories;
     const totalProtein = currentIntake.protein + plannedProtein;
@@ -377,9 +372,28 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
         interpretation = '(sehr kohlenhydratbetont)';
       }
       document.getElementById('rq-interpretation').textContent = interpretation;
+
+      // Berechne Makronährstoff-Verteilung in Prozent
+      const totalMacroCalories = carbCalories + fatCalories + proteinCalories;
+      if (totalMacroCalories > 0) {
+        const carbPercent = (carbCalories / totalMacroCalories) * 100;
+        const fatPercent = (fatCalories / totalMacroCalories) * 100;
+        const proteinPercent = (proteinCalories / totalMacroCalories) * 100;
+
+        document.getElementById('macro-carbs-percent').textContent = carbPercent.toFixed(1);
+        document.getElementById('macro-fat-percent').textContent = fatPercent.toFixed(1);
+        document.getElementById('macro-protein-percent').textContent = proteinPercent.toFixed(1);
+      } else {
+        document.getElementById('macro-carbs-percent').textContent = '-';
+        document.getElementById('macro-fat-percent').textContent = '-';
+        document.getElementById('macro-protein-percent').textContent = '-';
+      }
     } else {
       document.getElementById('respiratory-quotient').textContent = '-';
       document.getElementById('rq-interpretation').textContent = '';
+      document.getElementById('macro-carbs-percent').textContent = '-';
+      document.getElementById('macro-fat-percent').textContent = '-';
+      document.getElementById('macro-protein-percent').textContent = '-';
     }
 
     // Vergleich mit Zielen
