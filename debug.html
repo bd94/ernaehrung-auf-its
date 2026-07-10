@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug - Button Status</title>
+  <style>
+    .primary-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .primary-button[data-enabled="false"] {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      background: linear-gradient(135deg, #999 0%, #888 100%) !important;
+    }
+
+    .primary-button[data-enabled="false"]:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Debug Test</h1>
+
+  <p>Button sollte grau sein:</p>
+  <button id="test-btn" class="primary-button" data-enabled="false">Test Button</button>
+
+  <p>data-enabled Wert: <span id="status">-</span></p>
+
+  <button onclick="toggleButton()">Toggle data-enabled</button>
+
+  <script>
+    const btn = document.getElementById('test-btn');
+
+    function updateStatus() {
+      document.getElementById('status').textContent = btn.getAttribute('data-enabled');
+    }
+
+    function toggleButton() {
+      const current = btn.getAttribute('data-enabled');
+      btn.setAttribute('data-enabled', current === 'false' ? 'true' : 'false');
+      updateStatus();
+    }
+
+    btn.addEventListener('click', () => {
+      alert('Button wurde geklickt! data-enabled = ' + btn.getAttribute('data-enabled'));
+    });
+
+    updateStatus();
+  </script>
+</body>
+</html>

@@ -524,10 +524,21 @@ function updateCalorimetryButtonState() {
     }
   });
 
-  if (vco2 > 0 && hasValidInfusions && calculatedRQ) {
+  const shouldEnable = vco2 > 0 && hasValidInfusions && calculatedRQ;
+
+  console.log('UpdateCalorimetryButtonState:', {
+    vco2: vco2,
+    hasValidInfusions: hasValidInfusions,
+    calculatedRQ: calculatedRQ,
+    shouldEnable: shouldEnable
+  });
+
+  if (shouldEnable) {
     button.setAttribute('data-enabled', 'true');
+    console.log('Button aktiviert');
   } else {
     button.setAttribute('data-enabled', 'false');
+    console.log('Button deaktiviert');
   }
 }
 
