@@ -69,23 +69,30 @@ document.getElementById('fat-ratio').addEventListener('input', updateMacroSum);
 
 // Berechnungen durchführen
 document.getElementById('calculate-btn').addEventListener('click', () => {
-  const weight = parseFloat(document.getElementById('weight').value);
-  const height = parseFloat(document.getElementById('height').value);
-  const phase = document.getElementById('phase').value;
-  const day = parseInt(document.getElementById('day').value) || 1;
+  try {
+    const weight = parseFloat(document.getElementById('weight').value);
+    const height = parseFloat(document.getElementById('height').value);
+    const phase = document.getElementById('phase').value;
+    const day = parseInt(document.getElementById('day').value) || 1;
 
-  if (!weight || !height) {
-    alert('Bitte Körpergewicht und Körpergröße eingeben.');
-    return;
-  }
+    console.log('Berechnung gestartet:', { weight, height, phase, day });
 
-  // Berechnungen
-  const bmi = calculator.calculateBMI(weight, height);
-  const ibw = calculator.calculateIBW(height);
-  const abw = calculator.calculateABW(weight, ibw);
+    if (!weight || !height) {
+      alert('Bitte Körpergewicht und Körpergröße eingeben.');
+      return;
+    }
 
-  let calorieGoal = calculator.calculateCalorieGoal(weight, bmi, ibw, phase, day);
-  const cvvhd = document.getElementById('cvvhd-checkbox').checked;
+    // Berechnungen
+    const bmi = calculator.calculateBMI(weight, height);
+    const ibw = calculator.calculateIBW(height);
+    const abw = calculator.calculateABW(weight, ibw);
+
+    console.log('Berechnete Werte:', { bmi, ibw, abw });
+
+    let calorieGoal = calculator.calculateCalorieGoal(weight, bmi, ibw, phase, day);
+    console.log('Kalorienziel:', calorieGoal);
+
+    const cvvhd = document.getElementById('cvvhd-checkbox').checked;
 
   // Berechne Aminosäureziel
   let aminoGoal = calculator.calculateAminoAcidGoal(weight, bmi, ibw, phase, day);
@@ -134,6 +141,11 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
   document.getElementById('infusion-section').style.display = 'block';
 
   currentResults = { weight, height, bmi, ibw, abw, phase, day };
+  console.log('Berechnung erfolgreich abgeschlossen');
+  } catch (error) {
+    console.error('Fehler bei der Berechnung:', error);
+    alert('Fehler bei der Berechnung: ' + error.message);
+  }
 });
 
 // Laufende Infusionen
