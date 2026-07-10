@@ -17,6 +17,8 @@ document.getElementById('tab-calorimetry').addEventListener('click', () => {
     // Lade Standard-Lösungen falls keine vorhanden
     loadDefaultSolutions();
   }
+  // Aktualisiere Button-Status
+  updateCalorimetryButtonState();
 });
 
 document.getElementById('tab-formulas').addEventListener('click', () => {
@@ -661,47 +663,37 @@ document.getElementById('calculate-rq-btn').addEventListener('click', () => {
 
 // Indirekte Kalorimetrie berechnen
 document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
-  // Prüfe ob Button disabled ist und zeige Hinweis
-  const button = document.getElementById('calculate-calorimetry-btn');
-  if (button.getAttribute('data-enabled') === 'false') {
-    let missingRequirements = [];
+  // Prüfe alle Voraussetzungen und sammle fehlende Anforderungen
+  let missingRequirements = [];
 
-    const vco2 = parseFloat(document.getElementById('measured-vco2').value);
-    if (!vco2 || vco2 <= 0) {
-      missingRequirements.push('- VCO2-Wert vom Beatmungsgerät eingeben');
+  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
+  if (!vco2 || vco2 <= 0) {
+    missingRequirements.push('- VCO2-Wert vom Beatmungsgerät eingeben');
+  }
+
+  let hasValidInfusions = false;
+  document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
+    const select = row.querySelector('.solution-select');
+    const rateInput = row.querySelector('.rate-input');
+    if (select && select.value && rateInput && parseFloat(rateInput.value) > 0) {
+      hasValidInfusions = true;
     }
+  });
+  if (!hasValidInfusions) {
+    missingRequirements.push('- Mindestens eine laufende Infusion mit Lösung und Laufrate eingeben');
+  }
 
-    let hasValidInfusions = false;
-    document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
-      const select = row.querySelector('.solution-select');
-      const rateInput = row.querySelector('.rate-input');
-      if (select && select.value && rateInput && parseFloat(rateInput.value) > 0) {
-        hasValidInfusions = true;
-      }
-    });
-    if (!hasValidInfusions) {
-      missingRequirements.push('- Mindestens eine laufende Infusion mit Lösung und Laufrate eingeben');
-    }
+  if (!calculatedRQ) {
+    missingRequirements.push('- RQ berechnen (Button "RQ berechnen" klicken)');
+  }
 
-    if (!calculatedRQ) {
-      missingRequirements.push('- RQ berechnen (Button "RQ berechnen" klicken)');
-    }
-
+  // Wenn etwas fehlt, zeige Hinweis
+  if (missingRequirements.length > 0) {
     alert('Für die Berechnung der indirekten Kalorimetrie sind folgende Schritte erforderlich:\n\n' + missingRequirements.join('\n'));
     return;
   }
 
-  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
-
-  if (!vco2) {
-    alert('Bitte VCO2-Wert vom Beatmungsgerät eingeben.');
-    return;
-  }
-
-  if (!calculatedRQ) {
-    alert('Bitte zuerst "RQ berechnen" klicken.');
-    return;
-  }
+  // Alle Voraussetzungen erfüllt - führe Berechnung durch
 
   document.getElementById('used-rq').textContent = calculatedRQ.toFixed(2);
   document.getElementById('used-vco2').textContent = Math.round(vco2);

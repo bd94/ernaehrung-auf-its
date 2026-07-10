@@ -146,14 +146,14 @@ nav {
 }
 
 .primary-button[data-enabled="false"] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: linear-gradient(135deg, #999 0%, #888 100%);
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background: linear-gradient(135deg, #999 0%, #888 100%) !important;
 }
 
 .primary-button[data-enabled="false"]:hover {
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .secondary-button {
