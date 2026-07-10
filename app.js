@@ -523,9 +523,9 @@ function updateCalorimetryButtonState() {
   });
 
   if (vco2 > 0 && hasValidInfusions && calculatedRQ) {
-    button.disabled = false;
+    button.setAttribute('data-enabled', 'true');
   } else {
-    button.disabled = true;
+    button.setAttribute('data-enabled', 'false');
   }
 }
 
@@ -662,7 +662,8 @@ document.getElementById('calculate-rq-btn').addEventListener('click', () => {
 // Indirekte Kalorimetrie berechnen
 document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
   // Prüfe ob Button disabled ist und zeige Hinweis
-  if (document.getElementById('calculate-calorimetry-btn').disabled) {
+  const button = document.getElementById('calculate-calorimetry-btn');
+  if (button.getAttribute('data-enabled') === 'false') {
     let missingRequirements = [];
 
     const vco2 = parseFloat(document.getElementById('measured-vco2').value);

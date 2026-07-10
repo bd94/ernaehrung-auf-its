@@ -145,6 +145,17 @@ nav {
   transform: translateY(0);
 }
 
+.primary-button[data-enabled="false"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #999 0%, #888 100%);
+}
+
+.primary-button[data-enabled="false"]:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .secondary-button {
   background: white;
   color: #667eea;
