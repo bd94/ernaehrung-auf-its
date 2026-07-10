@@ -510,10 +510,19 @@ function loadDefaultSolutions() {
 // Funktion: Prüfe ob "Indirekte Kalorimetrie" Button aktiviert werden kann
 function updateCalorimetryButtonState() {
   const vco2 = parseFloat(document.getElementById('measured-vco2').value);
-  const hasInfusions = document.querySelectorAll('#calorimetry-solutions-container .solution-row').length > 0;
   const button = document.getElementById('calculate-calorimetry-btn');
 
-  if (vco2 > 0 && hasInfusions && calculatedRQ) {
+  // Prüfe ob mindestens eine vollständige Infusion eingegeben wurde
+  let hasValidInfusions = false;
+  document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
+    const select = row.querySelector('.solution-select');
+    const rateInput = row.querySelector('.rate-input');
+    if (select && select.value && rateInput && parseFloat(rateInput.value) > 0) {
+      hasValidInfusions = true;
+    }
+  });
+
+  if (vco2 > 0 && hasValidInfusions && calculatedRQ) {
     button.disabled = false;
   } else {
     button.disabled = true;
@@ -551,12 +560,18 @@ function createCalorimetrySolutionRow() {
     select.appendChild(option);
   });
 
+  // Überwache Änderungen im Select
+  select.addEventListener('change', updateCalorimetryButtonState);
+
   const rateInput = document.createElement('input');
   rateInput.type = 'number';
   rateInput.className = 'rate-input';
   rateInput.placeholder = 'Laufrate (ml/h)';
   rateInput.step = '0.1';
   rateInput.min = '0';
+
+  // Überwache Änderungen im Input
+  rateInput.addEventListener('input', updateCalorimetryButtonState);
 
   const removeBtn = document.createElement('button');
   removeBtn.textContent = '✕';
@@ -646,6 +661,35 @@ document.getElementById('calculate-rq-btn').addEventListener('click', () => {
 
 // Indirekte Kalorimetrie berechnen
 document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
+  // Prüfe ob Button disabled ist und zeige Hinweis
+  if (document.getElementById('calculate-calorimetry-btn').disabled) {
+    let missingRequirements = [];
+
+    const vco2 = parseFloat(document.getElementById('measured-vco2').value);
+    if (!vco2 || vco2 <= 0) {
+      missingRequirements.push('- VCO2-Wert vom Beatmungsgerät eingeben');
+    }
+
+    let hasValidInfusions = false;
+    document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
+      const select = row.querySelector('.solution-select');
+      const rateInput = row.querySelector('.rate-input');
+      if (select && select.value && rateInput && parseFloat(rateInput.value) > 0) {
+        hasValidInfusions = true;
+      }
+    });
+    if (!hasValidInfusions) {
+      missingRequirements.push('- Mindestens eine laufende Infusion mit Lösung und Laufrate eingeben');
+    }
+
+    if (!calculatedRQ) {
+      missingRequirements.push('- RQ berechnen (Button "RQ berechnen" klicken)');
+    }
+
+    alert('Für die Berechnung der indirekten Kalorimetrie sind folgende Schritte erforderlich:\n\n' + missingRequirements.join('\n'));
+    return;
+  }
+
   const vco2 = parseFloat(document.getElementById('measured-vco2').value);
 
   if (!vco2) {
