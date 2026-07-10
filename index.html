@@ -160,18 +160,29 @@
     <div id="calorimetry-tab" class="tab-content">
       <div class="section">
         <h2>Indirekte Kalorimetrie</h2>
-        <p class="info">Berechnung des Energieumsatzes basierend auf laufender Ernährung und Gasaustausch (VO2, VCO2).</p>
+        <p class="info">Berechnung des Energieumsatzes basierend auf laufender Ernährung und Gasaustausch.</p>
 
         <h3>Laufende Ernährung</h3>
         <div id="calorimetry-solutions-container">
           <button id="add-calorimetry-solution" class="secondary-button">+ Laufende Infusion hinzufügen</button>
         </div>
 
-        <button id="calculate-calorimetry-btn" class="primary-button">RQ und VCO2 berechnen</button>
+        <h3>VCO2 (gemessen am Beatmungsgerät)</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="measured-vco2">VCO2:</label>
+            <input type="number" id="measured-vco2" step="1" min="0" placeholder="ml/min">
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button id="calculate-rq-btn" class="secondary-button">RQ berechnen</button>
+          <button id="calculate-calorimetry-btn" class="primary-button" disabled>Indirekte Kalorimetrie (Weir-Formel)</button>
+        </div>
       </div>
 
-      <div class="section" id="calorimetry-results-section" style="display: none;">
-        <h2>Berechnete Werte</h2>
+      <div class="section" id="rq-results-section" style="display: none;">
+        <h2>RQ aus laufender Ernährung</h2>
 
         <div class="results-grid">
           <div class="result-item">
@@ -194,59 +205,38 @@
             <span id="calorimetry-protein" class="result-value">-</span>
             <span class="result-unit">g/Tag</span>
           </div>
-        </div>
-
-        <h3>Respiratorische Parameter aus laufender Ernährung</h3>
-        <div class="results-grid">
           <div class="result-item">
             <span class="result-label">RQ (berechnet):</span>
             <span id="calorimetry-rq" class="result-value">-</span>
             <span class="result-unit" id="calorimetry-rq-interpretation"></span>
           </div>
         </div>
+      </div>
 
-        <h3>Indirekte Kalorimetrie - Energieumsatz berechnen</h3>
-        <p class="info">Geben Sie den gemessenen VCO2-Wert vom Beatmungsgerät ein und nutzen Sie den berechneten RQ:</p>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="measured-vco2">VCO2 (gemessen am Beatmungsgerät):</label>
-            <input type="number" id="measured-vco2" step="1" min="0" placeholder="ml/min">
+      <div class="section" id="calorimetry-results-section" style="display: none;">
+        <h2>Indirekte Kalorimetrie - Ergebnisse</h2>
+        <div class="results-grid">
+          <div class="result-item">
+            <span class="result-label">Verwendeter RQ:</span>
+            <span id="used-rq" class="result-value">-</span>
           </div>
-          <div class="form-group">
-            <label for="use-calculated-rq">
-              <input type="checkbox" id="use-calculated-rq" checked style="width: auto; margin-right: 8px;">
-              Berechneten RQ verwenden
-            </label>
+          <div class="result-item">
+            <span class="result-label">VCO2 (gemessen):</span>
+            <span id="used-vco2" class="result-value">-</span>
+            <span class="result-unit">ml/min</span>
           </div>
-          <div class="form-group" id="manual-rq-group" style="display: none;">
-            <label for="manual-rq">RQ (manuell):</label>
-            <input type="number" id="manual-rq" step="0.01" min="0.5" max="1.5" placeholder="0.85">
+          <div class="result-item">
+            <span class="result-label">Berechneter VO2:</span>
+            <span id="calculated-vo2" class="result-value">-</span>
+            <span class="result-unit">ml/min</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Energieumsatz (REE):</span>
+            <span id="calculated-ree" class="result-value">-</span>
+            <span class="result-unit">kcal/Tag</span>
           </div>
         </div>
-
-        <button id="calculate-ee-btn" class="primary-button">Energieumsatz berechnen (VCO2 + RQ)</button>
-
-        <div id="ee-results" style="display: none;">
-          <h3>Berechneter Energieumsatz</h3>
-          <div class="results-grid">
-            <div class="result-item">
-              <span class="result-label">Verwendeter RQ:</span>
-              <span id="used-rq" class="result-value">-</span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">Berechneter VO2:</span>
-              <span id="calculated-vo2" class="result-value">-</span>
-              <span class="result-unit">ml/min</span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">Energieumsatz (REE):</span>
-              <span id="calculated-ree" class="result-value">-</span>
-              <span class="result-unit">kcal/Tag</span>
-            </div>
-          </div>
-          <p class="info" id="ee-interpretation"></p>
-        </div>
+        <p class="info" id="ee-interpretation"></p>
       </div>
     </div>
 

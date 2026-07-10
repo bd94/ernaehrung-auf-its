@@ -490,6 +490,9 @@ document.getElementById('reset-formulas-btn').addEventListener('click', () => {
 
 // ===== INDIREKTE KALORIMETRIE TAB =====
 
+// Hilfsvariablen für Calorimetrie
+let calculatedRQ = null;
+
 // Hilfsfunktion: Standard-Lösungen laden
 function loadDefaultSolutions() {
   // Die Default-Lösungen sind bereits im solutionManager constructor hinterlegt
@@ -504,11 +507,29 @@ function loadDefaultSolutions() {
   updateSolutionsTable();
 }
 
+// Funktion: Prüfe ob "Indirekte Kalorimetrie" Button aktiviert werden kann
+function updateCalorimetryButtonState() {
+  const vco2 = parseFloat(document.getElementById('measured-vco2').value);
+  const hasInfusions = document.querySelectorAll('#calorimetry-solutions-container .solution-row').length > 0;
+  const button = document.getElementById('calculate-calorimetry-btn');
+
+  if (vco2 > 0 && hasInfusions && calculatedRQ) {
+    button.disabled = false;
+  } else {
+    button.disabled = true;
+  }
+}
+
+// VCO2 Input überwachen
+document.getElementById('measured-vco2').addEventListener('input', updateCalorimetryButtonState);
+
 // Hinzufügen von Lösungen für Kalorimetrie
 document.getElementById('add-calorimetry-solution').addEventListener('click', () => {
   const container = document.getElementById('calorimetry-solutions-container');
   const solutionRow = createCalorimetrySolutionRow();
-  container.insertBefore(solutionRow, container.querySelector('button'));
+  const addButton = document.getElementById('add-calorimetry-solution');
+  container.insertBefore(solutionRow, addButton);
+  updateCalorimetryButtonState();
 });
 
 function createCalorimetrySolutionRow() {
@@ -542,6 +563,7 @@ function createCalorimetrySolutionRow() {
   removeBtn.className = 'remove-button';
   removeBtn.addEventListener('click', () => {
     div.remove();
+    updateCalorimetryButtonState();
   });
 
   div.appendChild(select);
@@ -551,8 +573,8 @@ function createCalorimetrySolutionRow() {
   return div;
 }
 
-// RQ und VCO2 berechnen
-document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
+// RQ berechnen
+document.getElementById('calculate-rq-btn').addEventListener('click', () => {
   const calorimetrySolutions = [];
   document.querySelectorAll('#calorimetry-solutions-container .solution-row').forEach(row => {
     const select = row.querySelector('.solution-select');
@@ -599,18 +621,18 @@ document.getElementById('calculate-calorimetry-btn').addEventListener('click', (
   const proteinCalories = totalProtein * 4;
 
   if (totalCalories > 0) {
-    const rq = (carbCalories * 1.0 + fatCalories * 0.7 + proteinCalories * 0.81) / totalCalories;
-    document.getElementById('calorimetry-rq').textContent = rq.toFixed(2);
+    calculatedRQ = (carbCalories * 1.0 + fatCalories * 0.7 + proteinCalories * 0.81) / totalCalories;
+    document.getElementById('calorimetry-rq').textContent = calculatedRQ.toFixed(2);
 
     // Interpretation
     let interpretation = '';
-    if (rq < 0.75) {
+    if (calculatedRQ < 0.75) {
       interpretation = '(sehr fettbetont)';
-    } else if (rq < 0.82) {
+    } else if (calculatedRQ < 0.82) {
       interpretation = '(fettbetont)';
-    } else if (rq < 0.88) {
+    } else if (calculatedRQ < 0.88) {
       interpretation = '(ausgewogen)';
-    } else if (rq < 0.95) {
+    } else if (calculatedRQ < 0.95) {
       interpretation = '(kohlenhydratbetont)';
     } else {
       interpretation = '(sehr kohlenhydratbetont)';
@@ -618,16 +640,12 @@ document.getElementById('calculate-calorimetry-btn').addEventListener('click', (
     document.getElementById('calorimetry-rq-interpretation').textContent = interpretation;
   }
 
-  document.getElementById('calorimetry-results-section').style.display = 'block';
+  document.getElementById('rq-results-section').style.display = 'block';
+  updateCalorimetryButtonState();
 });
 
-// RQ-Checkbox Handler
-document.getElementById('use-calculated-rq').addEventListener('change', (e) => {
-  document.getElementById('manual-rq-group').style.display = e.target.checked ? 'none' : 'block';
-});
-
-// Energieumsatz berechnen aus gemessenem VCO2 und RQ
-document.getElementById('calculate-ee-btn').addEventListener('click', () => {
+// Indirekte Kalorimetrie berechnen
+document.getElementById('calculate-calorimetry-btn').addEventListener('click', () => {
   const vco2 = parseFloat(document.getElementById('measured-vco2').value);
 
   if (!vco2) {
@@ -635,33 +653,20 @@ document.getElementById('calculate-ee-btn').addEventListener('click', () => {
     return;
   }
 
-  // RQ verwenden (berechnet oder manuell)
-  let rq;
-  const useCalculatedRQ = document.getElementById('use-calculated-rq').checked;
-
-  if (useCalculatedRQ) {
-    const rqText = document.getElementById('calorimetry-rq').textContent;
-    if (rqText === '-') {
-      alert('Bitte zuerst "RQ und VCO2 berechnen" klicken oder manuellen RQ eingeben.');
-      return;
-    }
-    rq = parseFloat(rqText);
-  } else {
-    rq = parseFloat(document.getElementById('manual-rq').value);
-    if (!rq) {
-      alert('Bitte manuellen RQ-Wert eingeben.');
-      return;
-    }
+  if (!calculatedRQ) {
+    alert('Bitte zuerst "RQ berechnen" klicken.');
+    return;
   }
 
-  document.getElementById('used-rq').textContent = rq.toFixed(2);
+  document.getElementById('used-rq').textContent = calculatedRQ.toFixed(2);
+  document.getElementById('used-vco2').textContent = Math.round(vco2);
 
   // Berechne VO2 aus VCO2 und RQ
   // RQ = VCO2 / VO2  =>  VO2 = VCO2 / RQ
-  const vo2 = vco2 / rq;
+  const vo2 = vco2 / calculatedRQ;
   document.getElementById('calculated-vo2').textContent = Math.round(vo2);
 
-  // Berechne Energieumsatz mit Weir-Formel (vereinfachte Version)
+  // Berechne Energieumsatz mit Weir-Formel
   // REE (kcal/Tag) = [3.941 × VO2 (L/min) + 1.106 × VCO2 (L/min)] × 1440
   const vo2L = vo2 / 1000; // ml/min -> L/min
   const vco2L = vco2 / 1000; // ml/min -> L/min
@@ -672,13 +677,13 @@ document.getElementById('calculate-ee-btn').addEventListener('click', () => {
 
   // Interpretation
   let interpretation = `Der berechnete Energieumsatz beträgt ${Math.round(ree)} kcal/Tag. `;
-  if (rq < 0.7) {
+  if (calculatedRQ < 0.7) {
     interpretation += 'Der RQ ist ungewöhnlich niedrig (<0.7), bitte Werte überprüfen.';
-  } else if (rq > 1.0) {
+  } else if (calculatedRQ > 1.0) {
     interpretation += 'Der RQ ist >1.0, was auf Lipogenese (Fettaufbau aus Kohlenhydraten) oder Hyperventilation hindeuten kann.';
-  } else if (rq < 0.75) {
+  } else if (calculatedRQ < 0.75) {
     interpretation += 'Ausgeprägte Fettoxidation (ketogener Stoffwechsel).';
-  } else if (rq < 0.85) {
+  } else if (calculatedRQ < 0.85) {
     interpretation += 'Gemischte Fett- und Kohlenhydratoxidation.';
   } else {
     interpretation += 'Vorwiegend Kohlenhydratoxidation.';
@@ -700,7 +705,7 @@ document.getElementById('calculate-ee-btn').addEventListener('click', () => {
   }
 
   document.getElementById('ee-interpretation').textContent = interpretation;
-  document.getElementById('ee-results').style.display = 'block';
+  document.getElementById('calorimetry-results-section').style.display = 'block';
 });
 
 // CSV importieren (Browser File API)
