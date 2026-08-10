@@ -108,8 +108,8 @@ class NutritionCalculator {
   }
 
   // Kalorienziel berechnen
-  calculateCalorieGoal(weight, bmi, ibw, abw, phase, day) {
-    const variables = { weight, bmi, ibw, abw, day };
+  calculateCalorieGoal(weight, height, bmi, ibw, abw, phase, day) {
+    const variables = { weight, height, bmi, ibw, abw, day };
 
     try {
       if (phase === 'aggression') {
