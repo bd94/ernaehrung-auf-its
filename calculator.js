@@ -34,13 +34,21 @@ class NutritionCalculator {
       },
       // Kalorienziel Postaggression
       caloriesPostaggression: {
-        bmiUnder30: {
+        bmiUnder27: {
           formula: '32 * weight',
-          description: 'Postaggression, BMI <30'
+          description: 'Postaggression, BMI <27'
         },
-        bmi30to50: {
+        bmi27to30: {
+          // Smooth transition that dampens the calorie increase from BMI 27-30
+          // Interpolate multiplier from 32 to 31 (kcal/kg)
+          // Applied to current weight ensures continuous increase, just slower
+          startMultiplier: 32,
+          endMultiplier: 31,
+          description: 'Postaggression, BMI 27-30 (gedämpfter Übergang: 32→31 kcal/kg)'
+        },
+        bmiOver30: {
           formula: '12 * weight',
-          description: 'Postaggression, BMI 30-50'
+          description: 'Postaggression, BMI 30-50 (nur wenn höher als BMI 30 Wert)'
         },
         bmiOver50: {
           formula: '24 * ibw',
@@ -100,8 +108,8 @@ class NutritionCalculator {
   }
 
   // Kalorienziel berechnen
-  calculateCalorieGoal(weight, bmi, ibw, phase, day) {
-    const variables = { weight, bmi, ibw, day };
+  calculateCalorieGoal(weight, bmi, ibw, abw, phase, day) {
+    const variables = { weight, bmi, ibw, abw, day };
 
     try {
       if (phase === 'aggression') {
@@ -122,27 +130,66 @@ class NutritionCalculator {
           return this.evaluateFormula(formula, variables);
         }
       } else if (phase === 'postaggression') {
-        if (bmi < 30) {
-          const formulaObj = this.formulas.caloriesPostaggression.bmiUnder30;
+        if (bmi < 27) {
+          // BMI < 27: Standard high calorie target
+          const formulaObj = this.formulas.caloriesPostaggression.bmiUnder27;
           if (!formulaObj || !formulaObj.formula) {
-            console.error('Formel nicht gefunden: caloriesPostaggression.bmiUnder30', this.formulas.caloriesPostaggression);
-            throw new Error('Formel für Postaggression BMI <30 nicht gefunden');
+            console.error('Formel nicht gefunden: caloriesPostaggression.bmiUnder27', this.formulas.caloriesPostaggression);
+            throw new Error('Formel für Postaggression BMI <27 nicht gefunden');
           }
           return this.evaluateFormula(formulaObj.formula, variables);
-        } else if (bmi <= 50) {
-          const formulaObj = this.formulas.caloriesPostaggression.bmi30to50;
-          if (!formulaObj || !formulaObj.formula) {
-            console.error('Formel nicht gefunden: caloriesPostaggression.bmi30to50', this.formulas.caloriesPostaggression);
-            throw new Error('Formel für Postaggression BMI 30-50 nicht gefunden');
+        } else if (bmi < 30) {
+          // BMI 27-30: Smooth transition that dampens calorie increase
+          // Strategy: Interpolate the multiplier from startMultiplier to endMultiplier
+          // Then apply to current weight. This ensures continuous increase but at slower rate.
+          const formulaObj = this.formulas.caloriesPostaggression.bmi27to30;
+          if (!formulaObj || !formulaObj.startMultiplier === undefined || !formulaObj.endMultiplier === undefined) {
+            console.error('Formel nicht gefunden: caloriesPostaggression.bmi27to30', this.formulas.caloriesPostaggression);
+            throw new Error('Formel für Postaggression BMI 27-30 nicht gefunden');
           }
-          return this.evaluateFormula(formulaObj.formula, variables);
+
+          const startMultiplier = formulaObj.startMultiplier;
+          const endMultiplier = formulaObj.endMultiplier;
+
+          // Normalize BMI to 0-1 range
+          const t = (bmi - 27) / (30 - 27);
+
+          // Smooth hermite interpolation (ease in and out)
+          const smoothT = t * t * (3 - 2 * t);
+
+          // Interpolate the multiplier
+          const multiplier = startMultiplier + (endMultiplier - startMultiplier) * smoothT;
+
+          // Apply to current weight
+          return multiplier * weight;
         } else {
-          const formulaObj = this.formulas.caloriesPostaggression.bmiOver50;
-          if (!formulaObj || !formulaObj.formula) {
-            console.error('Formel nicht gefunden: caloriesPostaggression.bmiOver50', this.formulas.caloriesPostaggression);
-            throw new Error('Formel für Postaggression BMI >50 nicht gefunden');
+          // BMI >= 30: Use guideline formula, but ensure no drop from BMI <30
+          // Calculate what BMI 30 would give using the end multiplier
+          const weight30 = 30 * height * height;
+          const endMultiplier = this.formulas.caloriesPostaggression.bmi27to30.endMultiplier;
+          const bmi30Calories = endMultiplier * weight30;
+
+          // Calculate guideline formula for current BMI
+          let guidelineCalories;
+          if (bmi <= 50) {
+            const formulaObj = this.formulas.caloriesPostaggression.bmiOver30;
+            if (!formulaObj || !formulaObj.formula) {
+              console.error('Formel nicht gefunden: caloriesPostaggression.bmiOver30', this.formulas.caloriesPostaggression);
+              throw new Error('Formel für Postaggression BMI >30 nicht gefunden');
+            }
+            guidelineCalories = this.evaluateFormula(formulaObj.formula, variables);
+          } else {
+            // BMI > 50: IBW-based formula
+            const formulaObj = this.formulas.caloriesPostaggression.bmiOver50;
+            if (!formulaObj || !formulaObj.formula) {
+              console.error('Formel nicht gefunden: caloriesPostaggression.bmiOver50', this.formulas.caloriesPostaggression);
+              throw new Error('Formel für Postaggression BMI >50 nicht gefunden');
+            }
+            guidelineCalories = this.evaluateFormula(formulaObj.formula, variables);
           }
-          return this.evaluateFormula(formulaObj.formula, variables);
+
+          // Use the higher of the two values (no drop allowed)
+          return Math.max(bmi30Calories, guidelineCalories);
         }
       }
     } catch (error) {
