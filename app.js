@@ -436,19 +436,24 @@ function loadFormulasToUI() {
   document.getElementById('formula-abw').value = formulas.abw.formula;
   document.getElementById('formula-protein-to-amino-factor').value = calculator.proteinToAminoAcidFactor;
 
-  document.getElementById('formula-cal-agg-30-d13').value = formulas.caloriesAggression.bmiUnder30.day1to3.formula;
-  document.getElementById('formula-cal-agg-30-d4').value = formulas.caloriesAggression.bmiUnder30.day4plus.formula;
+  document.getElementById('formula-cal-agg-27-d13').value = formulas.caloriesAggression.bmiUnder27.day1to3.formula;
+  document.getElementById('formula-cal-agg-27-d4').value = formulas.caloriesAggression.bmiUnder27.day4plus.formula;
 
-  document.getElementById('formula-cal-agg-3050-d13').value = formulas.caloriesAggression.bmi30to50.day1to3.formula;
-  document.getElementById('formula-cal-agg-3050-d4').value = formulas.caloriesAggression.bmi30to50.day4plus.formula;
+  document.getElementById('formula-cal-agg-2730-d13-start').value = formulas.caloriesAggression.bmi27to30.day1to3.startMultiplier;
+  document.getElementById('formula-cal-agg-2730-d13-end').value = formulas.caloriesAggression.bmi27to30.day1to3.endMultiplier;
+  document.getElementById('formula-cal-agg-2730-d4-start').value = formulas.caloriesAggression.bmi27to30.day4plus.startMultiplier;
+  document.getElementById('formula-cal-agg-2730-d4-end').value = formulas.caloriesAggression.bmi27to30.day4plus.endMultiplier;
+
+  document.getElementById('formula-cal-agg-over30-d13').value = formulas.caloriesAggression.bmiOver30.day1to3.formula;
+  document.getElementById('formula-cal-agg-over30-d4').value = formulas.caloriesAggression.bmiOver30.day4plus.formula;
 
   document.getElementById('formula-cal-agg-50-d13').value = formulas.caloriesAggression.bmiOver50.day1to3.formula;
   document.getElementById('formula-cal-agg-50-d4').value = formulas.caloriesAggression.bmiOver50.day4plus.formula;
 
   document.getElementById('formula-cal-post-27').value = formulas.caloriesPostaggression.bmiUnder27.formula;
-  document.getElementById('formula-cal-post-2735-start').value = formulas.caloriesPostaggression.bmi27to35.startFormula;
-  document.getElementById('formula-cal-post-2735-end').value = formulas.caloriesPostaggression.bmi27to35.endFormula;
-  document.getElementById('formula-cal-post-3550').value = formulas.caloriesPostaggression.bmi35to50.formula;
+  document.getElementById('formula-cal-post-2730-start').value = formulas.caloriesPostaggression.bmi27to30.startMultiplier;
+  document.getElementById('formula-cal-post-2730-end').value = formulas.caloriesPostaggression.bmi27to30.endMultiplier;
+  document.getElementById('formula-cal-post-over30').value = formulas.caloriesPostaggression.bmiOver30.formula;
   document.getElementById('formula-cal-post-50').value = formulas.caloriesPostaggression.bmiOver50.formula;
 
   document.getElementById('formula-amino-30-d13').value = formulas.aminoAcids.bmiUnder30.day1to3.formula;
@@ -474,19 +479,24 @@ document.getElementById('save-formulas-btn').addEventListener('click', () => {
   calculator.formulas.abw.formula = document.getElementById('formula-abw').value;
   calculator.proteinToAminoAcidFactor = parseFloat(document.getElementById('formula-protein-to-amino-factor').value);
 
-  calculator.formulas.caloriesAggression.bmiUnder30.day1to3.formula = document.getElementById('formula-cal-agg-30-d13').value;
-  calculator.formulas.caloriesAggression.bmiUnder30.day4plus.formula = document.getElementById('formula-cal-agg-30-d4').value;
+  calculator.formulas.caloriesAggression.bmiUnder27.day1to3.formula = document.getElementById('formula-cal-agg-27-d13').value;
+  calculator.formulas.caloriesAggression.bmiUnder27.day4plus.formula = document.getElementById('formula-cal-agg-27-d4').value;
 
-  calculator.formulas.caloriesAggression.bmi30to50.day1to3.formula = document.getElementById('formula-cal-agg-3050-d13').value;
-  calculator.formulas.caloriesAggression.bmi30to50.day4plus.formula = document.getElementById('formula-cal-agg-3050-d4').value;
+  calculator.formulas.caloriesAggression.bmi27to30.day1to3.startMultiplier = parseFloat(document.getElementById('formula-cal-agg-2730-d13-start').value);
+  calculator.formulas.caloriesAggression.bmi27to30.day1to3.endMultiplier = parseFloat(document.getElementById('formula-cal-agg-2730-d13-end').value);
+  calculator.formulas.caloriesAggression.bmi27to30.day4plus.startMultiplier = parseFloat(document.getElementById('formula-cal-agg-2730-d4-start').value);
+  calculator.formulas.caloriesAggression.bmi27to30.day4plus.endMultiplier = parseFloat(document.getElementById('formula-cal-agg-2730-d4-end').value);
+
+  calculator.formulas.caloriesAggression.bmiOver30.day1to3.formula = document.getElementById('formula-cal-agg-over30-d13').value;
+  calculator.formulas.caloriesAggression.bmiOver30.day4plus.formula = document.getElementById('formula-cal-agg-over30-d4').value;
 
   calculator.formulas.caloriesAggression.bmiOver50.day1to3.formula = document.getElementById('formula-cal-agg-50-d13').value;
   calculator.formulas.caloriesAggression.bmiOver50.day4plus.formula = document.getElementById('formula-cal-agg-50-d4').value;
 
   calculator.formulas.caloriesPostaggression.bmiUnder27.formula = document.getElementById('formula-cal-post-27').value;
-  calculator.formulas.caloriesPostaggression.bmi27to35.startFormula = document.getElementById('formula-cal-post-2735-start').value;
-  calculator.formulas.caloriesPostaggression.bmi27to35.endFormula = document.getElementById('formula-cal-post-2735-end').value;
-  calculator.formulas.caloriesPostaggression.bmi35to50.formula = document.getElementById('formula-cal-post-3550').value;
+  calculator.formulas.caloriesPostaggression.bmi27to30.startMultiplier = parseFloat(document.getElementById('formula-cal-post-2730-start').value);
+  calculator.formulas.caloriesPostaggression.bmi27to30.endMultiplier = parseFloat(document.getElementById('formula-cal-post-2730-end').value);
+  calculator.formulas.caloriesPostaggression.bmiOver30.formula = document.getElementById('formula-cal-post-over30').value;
   calculator.formulas.caloriesPostaggression.bmiOver50.formula = document.getElementById('formula-cal-post-50').value;
 
   calculator.formulas.aminoAcids.bmiUnder30.day1to3.formula = document.getElementById('formula-amino-30-d13').value;
