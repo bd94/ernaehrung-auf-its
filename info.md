@@ -31,9 +31,9 @@ Im Tab "Formeln" können alle im Kalkulator angewandten Formeln eingesehen und a
 
 ### BMI-Stratifizierung
 Die Anwendung berücksichtigt unterschiedliche BMI-Bereiche:
-- **BMI <27**: Standard-Formeln
-- **BMI 27-30**: Gedämpfter Übergang (vermeidet steile Anstiege)
-- **BMI ≥30**: Angepasste Formeln mit Absicherung gegen Kalorienabfall
+- **BMI ≤30**: Standard-Formeln
+- **BMI >30 (mit Absicherung)**: Absicherung gegen Kalorienabfall unterhalb das Ziel der Standard-Formeln für BMI = 30
+- **BMI >30 (ohne Absicherung)**: integrierte Formeln der o.g. Leitlinien für BMI 30-50 und BMI >50
 
 ### Stoffwechselphasen
 - **Aggression (Tag 1-3)**: Reduzierte Ziele (75% der Standardziele)
@@ -71,7 +71,7 @@ Berechnen Sie den tatsächlichen Energieverbrauch mittels:
 
 ## Wichtige Hinweise
 
-⚠️ Diese Anwendung dient als Entscheidungshilfe. Die finale klinische Entscheidung liegt beim behandelnden Arzt.
+⚠️ Diese Anwendung dient als Entscheidungshilfe. Die finale klinische Entscheidung liegt beim behandelnden Arzt / der behandelnden Ärztin.
 
 ---
 
