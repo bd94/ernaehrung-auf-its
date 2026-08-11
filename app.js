@@ -6,6 +6,11 @@ const rateCalculator = new InfusionRateCalculator(solutionManager);
 let currentResults = null;
 
 // Tab-Navigation
+document.getElementById('tab-info').addEventListener('click', () => {
+  switchTab('info');
+  loadInfoContent();
+});
+
 document.getElementById('tab-calculator').addEventListener('click', () => {
   switchTab('calculator');
 });
@@ -89,8 +94,9 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
 
     console.log('Berechnete Werte:', { bmi, ibw, abw });
 
-    let calorieGoal = calculator.calculateCalorieGoal(weight, height, bmi, ibw, abw, phase, day);
-    console.log('Kalorienziel:', calorieGoal);
+    const useFloorProtection = document.getElementById('floor-protection-checkbox').checked;
+    let calorieGoal = calculator.calculateCalorieGoal(weight, height, bmi, ibw, abw, phase, day, useFloorProtection);
+    console.log('Kalorienziel:', calorieGoal, 'Floor protection:', useFloorProtection);
 
     const cvvhd = document.getElementById('cvvhd-checkbox').checked;
 
@@ -938,3 +944,72 @@ function mergeFormulas(defaultFormulas, savedFormulas) {
     displaySolutions(solutionManager.solutions);
   }
 })();
+
+// ===== INFO TAB =====
+
+// Simple Markdown to HTML converter
+function simpleMarkdownToHTML(markdown) {
+  let html = markdown;
+
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Code blocks
+  html = html.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
+
+  // Inline code
+  html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+  // Lists
+  html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+  // Horizontal rule
+  html = html.replace(/^---$/gim, '<hr>');
+
+  // Warning emoji
+  html = html.replace(/⚠️/g, '<span style="color: #ff9800;">⚠️</span>');
+
+  // Paragraphs (lines not already in tags)
+  const lines = html.split('\n');
+  const processedLines = lines.map(line => {
+    const trimmed = line.trim();
+    if (trimmed === '') return '<br>';
+    if (trimmed.startsWith('<') || trimmed.endsWith('>')) return line;
+    return '<p>' + line + '</p>';
+  });
+  html = processedLines.join('\n');
+
+  return html;
+}
+
+// Load info content from markdown file
+async function loadInfoContent() {
+  try {
+    const response = await fetch('info.md');
+    if (!response.ok) {
+      throw new Error('Markdown file not found');
+    }
+    const markdown = await response.text();
+    const html = simpleMarkdownToHTML(markdown);
+    document.getElementById('info-content').innerHTML = html;
+  } catch (error) {
+    console.error('Fehler beim Laden der Info:', error);
+    document.getElementById('info-content').innerHTML = `
+      <h1>Ernährung auf ITS - Infusionsraten-Kalkulator</h1>
+      <p>Willkommen zum Kalkulator für parenterale und enterale Ernährung.</p>
+      <p><em>Info-Inhalt konnte nicht geladen werden.</em></p>
+    `;
+  }
+}
+
+// Load info content on page load
+loadInfoContent();

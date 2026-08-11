@@ -121,7 +121,7 @@ class NutritionCalculator {
   }
 
   // Kalorienziel berechnen
-  calculateCalorieGoal(weight, height, bmi, ibw, abw, phase, day) {
+  calculateCalorieGoal(weight, height, bmi, ibw, abw, phase, day, useFloorProtection = true) {
     const variables = { weight, height, bmi, ibw, abw, day };
 
     try {
@@ -146,13 +146,7 @@ class NutritionCalculator {
           const multiplier = startMultiplier + (endMultiplier - startMultiplier) * smoothT;
           return multiplier * weight;
         } else {
-          // BMI >= 30: Use guideline formula, but ensure no drop from BMI 30
-          const weight30 = 30 * height * height;
-          const endMultiplier = day <= 3
-            ? this.formulas.caloriesAggression.bmi27to30.day1to3.endMultiplier
-            : this.formulas.caloriesAggression.bmi27to30.day4plus.endMultiplier;
-          const bmi30Calories = endMultiplier * weight30;
-
+          // BMI >= 30: Use guideline formula
           let guidelineCalories;
           if (bmi <= 50) {
             const formula = day <= 3
@@ -166,7 +160,17 @@ class NutritionCalculator {
             guidelineCalories = this.evaluateFormula(formula, variables);
           }
 
-          return Math.max(bmi30Calories, guidelineCalories);
+          // Apply floor protection if enabled
+          if (useFloorProtection) {
+            const weight30 = 30 * height * height;
+            const endMultiplier = day <= 3
+              ? this.formulas.caloriesAggression.bmi27to30.day1to3.endMultiplier
+              : this.formulas.caloriesAggression.bmi27to30.day4plus.endMultiplier;
+            const bmi30Calories = endMultiplier * weight30;
+            return Math.max(bmi30Calories, guidelineCalories);
+          }
+
+          return guidelineCalories;
         }
       } else if (phase === 'postaggression') {
         if (bmi < 27) {
@@ -202,13 +206,7 @@ class NutritionCalculator {
           // Apply to current weight
           return multiplier * weight;
         } else {
-          // BMI >= 30: Use guideline formula, but ensure no drop from BMI <30
-          // Calculate what BMI 30 would give using the end multiplier
-          const weight30 = 30 * height * height;
-          const endMultiplier = this.formulas.caloriesPostaggression.bmi27to30.endMultiplier;
-          const bmi30Calories = endMultiplier * weight30;
-
-          // Calculate guideline formula for current BMI
+          // BMI >= 30: Use guideline formula
           let guidelineCalories;
           if (bmi <= 50) {
             const formulaObj = this.formulas.caloriesPostaggression.bmiOver30;
@@ -227,8 +225,15 @@ class NutritionCalculator {
             guidelineCalories = this.evaluateFormula(formulaObj.formula, variables);
           }
 
-          // Use the higher of the two values (no drop allowed)
-          return Math.max(bmi30Calories, guidelineCalories);
+          // Apply floor protection if enabled
+          if (useFloorProtection) {
+            const weight30 = 30 * height * height;
+            const endMultiplier = this.formulas.caloriesPostaggression.bmi27to30.endMultiplier;
+            const bmi30Calories = endMultiplier * weight30;
+            return Math.max(bmi30Calories, guidelineCalories);
+          }
+
+          return guidelineCalories;
         }
       }
     } catch (error) {
