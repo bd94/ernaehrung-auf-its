@@ -4,7 +4,7 @@
 
 **Diese Website ist ein Hilfsmittel für die Berechnung der unten aufgeführten Parameter.**
 **Dabei integriert sie weder medizinische Kenntnisse, noch gesunden Menschenverstand!**
-**Hinterfragt werden sollte bei jeder Anwendung (wie auch jeder Verordnung von Ernährung ohne Verwendung dieses Hilfsmittels) mindestens:**
+**Hinterfragt werden sollte bei jeder Anwendung (wie auch bei jeder Verordnung von Ernährung ohne Verwendung dieses Hilfsmittels) mindestens:**
 - erscheinen die errechneten Ziele sinnvoll 
 - sind die Ziele in Anbetracht der klinischen Situation umsetzbar oder evtl. schädlich (Volumen, Appetit, Kostaufbau, etc.)
 - gibt es Einflussfaktoren, die hier nicht berücksichtigt werden (bspw. Leberzirrhose, Serum-Triglyzeridkonzentration, Harnstoff/Kreatinin-Dynamik)
@@ -77,3 +77,4 @@ Berechnen Sie den tatsächlichen Energieverbrauch mittels:
 
 **Version**: 1.0
 **Letztes Update**: August 2026
+**Hinweise / Fehlermeldung an**: bjoern.dahncke@ukdd.de
