@@ -17,7 +17,7 @@ Diese Anwendung unterstützt bei der Berechnung von:
 - **Infusionsraten** für 1-3 geplante Lösungen
 - **Indirekte Kalorimetrie** mittels VCO₂-Messung
 
-Grundlage der Berechnungen sind die Empfehlungen der DGEM Leitlinie "Klinische Ernährung in der Intensivmedizin". Die Empfehlungen sind mangels Studien im Bereich von BMI >30 $\frac{kg}{m^2}$ lückenhaft. In diesem Bereich wurden Empfehlungen anderer Fachgesellschaften (ESPEN, ASPEN) mit den Erwägungen der DGEM integriert und pragmatische Lösungen eingesetzt.
+Grundlage der Berechnungen sind die Empfehlungen der DGEM Leitlinie "Klinische Ernährung in der Intensivmedizin". Die Empfehlungen sind mangels Studien im Bereich von BMI >30 kg/m<sup>2</sup> lückenhaft. In diesem Bereich wurden Empfehlungen anderer Fachgesellschaften (ESPEN, ASPEN) mit den Erwägungen der DGEM integriert und pragmatische Lösungen eingesetzt.
 Im Tab "Formeln" können alle im Kalkulator angewandten Formeln eingesehen und angepasst werden. 
 
 ## Schnellstart
