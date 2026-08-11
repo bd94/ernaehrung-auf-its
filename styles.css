@@ -78,6 +78,10 @@ nav {
   font-size: 20px;
 }
 
+.section h2:not(:first-of-type) {
+  margin-top: 40px;
+}
+
 .section h3 {
   color: #764ba2;
   margin: 20px 0 10px 0;

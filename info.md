@@ -75,6 +75,6 @@ Berechnen Sie den tatsächlichen Energieverbrauch mittels:
 
 ---
 
-**Version**: 1.0
-**Letztes Update**: August 2026
-**Hinweise / Fehlermeldung an**: bjoern.dahncke@ukdd.de
+**Version**: 1.0<br>
+**Letztes Update**: August 2026<br>
+**Hinweise / Fehlermeldungen an**: bjoern.dahncke@ukdd.de
