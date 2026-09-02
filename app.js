@@ -287,8 +287,7 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
   const carbRatio = parseFloat(document.getElementById('carb-ratio').value) || 70;
   const fatRatio = parseFloat(document.getElementById('fat-ratio').value) || 30;
 
-  // Optimierungs-Priorität abrufen
-  const optimizationPriority = document.querySelector('input[name="optimization-priority"]:checked').value;
+  // Optimierungs-Priorität wird bereits weiter oben abgerufen (Zeile 240)
 
   // Aktuelle Aufnahme berechnen
   const currentIntake = rateCalculator.calculateCurrentIntake(runningSolutions);
