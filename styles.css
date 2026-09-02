@@ -276,6 +276,45 @@ nav {
 .goal-item {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.goal-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goal-input-group .goal-input {
+  flex: 1;
+}
+
+.sync-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  min-width: 40px;
+}
+
+.sync-button:hover {
+  background: #5568d3;
+}
+
+.sync-button:active {
+  background: #4451b8;
+}
+
+.per-kg-label {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #666;
+  font-weight: normal;
 }
 
 .goal-checkbox {
@@ -294,6 +333,38 @@ nav {
 .goal-checkbox label {
   font-size: 13px;
   color: #666;
+  cursor: pointer;
+  margin: 0;
+}
+
+.priority-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.priority-selection label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.priority-selection label:hover {
+  background-color: #e8eaf6;
+}
+
+.priority-selection input[type="radio"] {
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   margin: 0;
 }

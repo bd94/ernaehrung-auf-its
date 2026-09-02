@@ -76,16 +76,26 @@ document.getElementById('fat-ratio').addEventListener('input', updateMacroSum);
 document.getElementById('calculate-btn').addEventListener('click', () => {
   try {
     const weight = parseFloat(document.getElementById('weight').value);
-    const height = parseFloat(document.getElementById('height').value);
+    let height = parseFloat(document.getElementById('height').value);
     const phase = document.getElementById('phase').value;
     const day = parseInt(document.getElementById('day').value) || 1;
-
-    console.log('Berechnung gestartet:', { weight, height, phase, day });
 
     if (!weight || !height) {
       alert('Bitte Körpergewicht und Körpergröße eingeben.');
       return;
     }
+
+    // Automatische Interpretation: >3.0 = cm, ≤3.0 = m
+    if (height > 3.0) {
+      // Eingabe in cm → in m umrechnen
+      height = height / 100;
+      console.log('Körpergröße als cm interpretiert, umgerechnet in m:', height);
+    } else {
+      // Eingabe in m → direkt verwenden
+      console.log('Körpergröße als m interpretiert:', height);
+    }
+
+    console.log('Berechnung gestartet:', { weight, height, phase, day });
 
     // Berechnungen
     const bmi = calculator.calculateBMI(weight, height);
@@ -119,16 +129,20 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
   document.getElementById('result-ibw').textContent = ibw.toFixed(1);
   document.getElementById('result-abw').textContent = abw.toFixed(1);
 
-  // Zielwerte
+  // Zielwerte (pro Tag)
   if (calorieGoal !== null) {
     document.getElementById('calorie-goal').value = Math.round(calorieGoal);
     document.getElementById('auto-calorie').textContent = `(automatisch: ${Math.round(calorieGoal)} kcal)`;
+    // Berechne auch pro kg
+    document.getElementById('calorie-goal-per-kg').value = (calorieGoal / weight).toFixed(1);
   } else {
     document.getElementById('calorie-goal').value = '';
     document.getElementById('auto-calorie').textContent = '(manuelle Eingabe erforderlich)';
+    document.getElementById('calorie-goal-per-kg').value = '';
   }
 
   document.getElementById('amino-goal').value = aminoGoal.toFixed(1);
+  document.getElementById('amino-goal-per-kg').value = (aminoGoal / weight).toFixed(2);
   if (cvvhd) {
     document.getElementById('auto-amino').textContent = `(automatisch: ${aminoGoalBase.toFixed(1)} + ${calculator.calculateCVVHDAminoAcidAddition().toFixed(1)} CVVHD = ${aminoGoal.toFixed(1)} g)`;
   } else {
@@ -136,6 +150,7 @@ document.getElementById('calculate-btn').addEventListener('click', () => {
   }
 
   document.getElementById('protein-goal').value = proteinGoal.toFixed(1);
+  document.getElementById('protein-goal-per-kg').value = (proteinGoal / weight).toFixed(2);
   if (cvvhd) {
     document.getElementById('auto-protein').textContent = `(automatisch: ${proteinGoalBase.toFixed(1)} + ${calculator.calculateCVVHDProteinAddition().toFixed(1)} CVVHD = ${proteinGoal.toFixed(1)} g)`;
   } else {
@@ -269,6 +284,9 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
   const carbRatio = parseFloat(document.getElementById('carb-ratio').value) || 70;
   const fatRatio = parseFloat(document.getElementById('fat-ratio').value) || 30;
 
+  // Optimierungs-Priorität abrufen
+  const optimizationPriority = document.querySelector('input[name="optimization-priority"]:checked').value;
+
   // Aktuelle Aufnahme berechnen
   const currentIntake = rateCalculator.calculateCurrentIntake(runningSolutions);
   document.getElementById('current-calories').textContent = Math.round(currentIntake.calories);
@@ -284,7 +302,8 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
     carbRatio,
     fatRatio,
     ignoreAminoGoal,
-    ignoreProteinGoal
+    ignoreProteinGoal,
+    optimizationPriority
   );
 
   // Ergebnisse anzeigen
@@ -999,3 +1018,42 @@ async function loadInfoContent() {
 
 // Load info content on page load
 loadInfoContent();
+
+// Sync-Funktionen für Zielwerte (Tag ↔ kg)
+function syncGoalToPerKg(type) {
+  const weight = parseFloat(document.getElementById('weight').value);
+
+  if (!weight || weight <= 0) {
+    alert('Bitte zuerst Körpergewicht eingeben und berechnen.');
+    return;
+  }
+
+  const goalPerDay = parseFloat(document.getElementById(`${type}-goal`).value);
+
+  if (!goalPerDay || goalPerDay < 0) {
+    alert('Bitte einen gültigen Zielwert pro Tag eingeben.');
+    return;
+  }
+
+  const goalPerKg = goalPerDay / weight;
+  document.getElementById(`${type}-goal-per-kg`).value = goalPerKg.toFixed(type === 'calorie' ? 1 : 2);
+}
+
+function syncGoalFromPerKg(type) {
+  const weight = parseFloat(document.getElementById('weight').value);
+
+  if (!weight || weight <= 0) {
+    alert('Bitte zuerst Körpergewicht eingeben und berechnen.');
+    return;
+  }
+
+  const goalPerKg = parseFloat(document.getElementById(`${type}-goal-per-kg`).value);
+
+  if (!goalPerKg || goalPerKg < 0) {
+    alert('Bitte einen gültigen Zielwert pro kg eingeben.');
+    return;
+  }
+
+  const goalPerDay = goalPerKg * weight;
+  document.getElementById(`${type}-goal`).value = goalPerDay.toFixed(type === 'calorie' ? 0 : 1);
+}

@@ -38,8 +38,8 @@
             <input type="number" id="weight" step="0.1" min="0">
           </div>
           <div class="form-group">
-            <label for="height">Körpergröße (m):</label>
-            <input type="number" id="height" step="0.01" min="0">
+            <label for="height">Körpergröße (cm):</label>
+            <input type="number" id="height" step="0.1" min="0">
           </div>
           <div class="form-group">
             <label for="phase">Stoffwechsellage:</label>
@@ -90,13 +90,32 @@
         <div class="goals-grid">
           <div class="goal-item">
             <label for="calorie-goal">Kalorienziel (kcal/Tag):</label>
-            <input type="number" id="calorie-goal" step="1" class="goal-input">
+            <div class="goal-input-group">
+              <input type="number" id="calorie-goal" step="1" class="goal-input">
+              <button class="sync-button" onclick="syncGoalToPerKg('calorie')" title="Auf kcal/kg umrechnen">→</button>
+            </div>
             <span class="auto-value" id="auto-calorie"></span>
+
+            <label for="calorie-goal-per-kg" class="per-kg-label">Kalorienziel (kcal/kg/Tag):</label>
+            <div class="goal-input-group">
+              <input type="number" id="calorie-goal-per-kg" step="0.1" class="goal-input">
+              <button class="sync-button" onclick="syncGoalFromPerKg('calorie')" title="Auf kcal/Tag umrechnen">→</button>
+            </div>
           </div>
           <div class="goal-item">
             <label for="amino-goal">Aminosäureziel (g/Tag):</label>
-            <input type="number" id="amino-goal" step="0.1" class="goal-input">
+            <div class="goal-input-group">
+              <input type="number" id="amino-goal" step="0.1" class="goal-input">
+              <button class="sync-button" onclick="syncGoalToPerKg('amino')" title="Auf g/kg umrechnen">→</button>
+            </div>
             <span class="auto-value" id="auto-amino"></span>
+
+            <label for="amino-goal-per-kg" class="per-kg-label">Aminosäureziel (g/kg/Tag):</label>
+            <div class="goal-input-group">
+              <input type="number" id="amino-goal-per-kg" step="0.01" class="goal-input">
+              <button class="sync-button" onclick="syncGoalFromPerKg('amino')" title="Auf g/Tag umrechnen">→</button>
+            </div>
+
             <div class="goal-checkbox">
               <input type="checkbox" id="ignore-amino-goal">
               <label for="ignore-amino-goal">Bei Laufraten-Berechnung ignorieren</label>
@@ -104,13 +123,36 @@
           </div>
           <div class="goal-item">
             <label for="protein-goal">Proteinziel (g/Tag):</label>
-            <input type="number" id="protein-goal" step="0.1" class="goal-input">
+            <div class="goal-input-group">
+              <input type="number" id="protein-goal" step="0.1" class="goal-input">
+              <button class="sync-button" onclick="syncGoalToPerKg('protein')" title="Auf g/kg umrechnen">→</button>
+            </div>
             <span class="auto-value" id="auto-protein"></span>
+
+            <label for="protein-goal-per-kg" class="per-kg-label">Proteinziel (g/kg/Tag):</label>
+            <div class="goal-input-group">
+              <input type="number" id="protein-goal-per-kg" step="0.01" class="goal-input">
+              <button class="sync-button" onclick="syncGoalFromPerKg('protein')" title="Auf g/Tag umrechnen">→</button>
+            </div>
+
             <div class="goal-checkbox">
               <input type="checkbox" id="ignore-protein-goal">
               <label for="ignore-protein-goal">Bei Laufraten-Berechnung ignorieren</label>
             </div>
           </div>
+        </div>
+
+        <h3>Optimierungs-Priorität bei Zielkonflikten</h3>
+        <p class="info">Wenn die gewählten Lösungen die Ziele nicht gleichzeitig erreichen können (z.B. inkompatible Nährstoffverhältnisse), wird für das gewählte Ziel optimiert.</p>
+        <div class="priority-selection">
+          <label>
+            <input type="radio" name="optimization-priority" value="calories" checked>
+            <strong>Kalorien-Priorität</strong> (Kalorienziel erreichen, Protein/AS-Ziel überschreiten)
+          </label>
+          <label>
+            <input type="radio" name="optimization-priority" value="protein">
+            <strong>Protein/AS-Priorität</strong> (Protein/AS-Ziel erreichen, Kalorienziel unterschreiten)
+          </label>
         </div>
 
         <h3>Makronährstoff-Verteilung</h3>
