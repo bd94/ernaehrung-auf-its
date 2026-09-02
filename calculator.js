@@ -502,7 +502,7 @@ class InfusionRateCalculator {
   }
 
   // Erforderliche Laufraten berechnen
-  calculateRequiredRates(targetCalories, targetAminoAcids, targetProtein, runningSolutions, plannedSolutions, carbRatio = 70, fatRatio = 30, ignoreAminoGoal = false, ignoreProteinGoal = false) {
+  calculateRequiredRates(targetCalories, targetAminoAcids, targetProtein, runningSolutions, plannedSolutions, carbRatio = 70, fatRatio = 30, ignoreAminoGoal = false, ignoreProteinGoal = false, optimizationPriority = 'calories') {
     // Berechne aktuelle Aufnahme
     const currentIntake = this.calculateCurrentIntake(runningSolutions);
 
@@ -526,19 +526,29 @@ class InfusionRateCalculator {
       const proteinEquivPerMl = this.solutionManager.getTotalProteinEquivalent(solution, 1);
       const rateForProtein = proteinEquivPerMl > 0 ? remainingProtein / (proteinEquivPerMl * 24) : 0;
 
-      // Nimm die höchste Rate (limitierender Faktor)
-      const rates = [
-        { rate: rateForCalories, factor: 'Kalorien' },
-        { rate: rateForAminoAcids, factor: 'Aminosäuren' },
-        { rate: rateForProtein, factor: 'Protein' }
-      ];
-      const maxRate = rates.reduce((max, curr) => curr.rate > max.rate ? curr : max);
+      // Wähle basierend auf Optimierungs-Priorität
+      let chosenRate, limitingFactor;
+
+      if (optimizationPriority === 'calories') {
+        // Kalorien-Priorität: Nimm Kalorienziel (ignoriere Protein/AS)
+        chosenRate = rateForCalories;
+        limitingFactor = 'Kalorien';
+      } else {
+        // Protein/AS-Priorität: Nimm die höhere Rate von AS oder Protein
+        if (rateForAminoAcids >= rateForProtein) {
+          chosenRate = rateForAminoAcids;
+          limitingFactor = 'Aminosäuren';
+        } else {
+          chosenRate = rateForProtein;
+          limitingFactor = 'Protein';
+        }
+      }
 
       return [{
         name: plannedSolutions[0],
-        ratePerHour: maxRate.rate,
-        mlPerDay: maxRate.rate * 24,
-        limitingFactor: maxRate.factor
+        ratePerHour: chosenRate,
+        mlPerDay: chosenRate * 24,
+        limitingFactor: limitingFactor
       }];
     }
 
@@ -596,6 +606,63 @@ class InfusionRateCalculator {
 
       const rate1 = (b1 * a22 - b2 * a12) / det;
       const rate2 = (a11 * b2 - a21 * b1) / det;
+
+      // Prüfe ob eine der Raten negativ ist
+      if (rate1 < -0.01 || rate2 < -0.01) {
+        // Negative Raten bedeuten: Das Gleichungssystem hat keine gültige Lösung
+        // Fallback basierend auf Optimierungs-Priorität
+
+        const sol1 = this.solutionManager.findSolution(plannedSolutions[0]);
+        const sol2 = this.solutionManager.findSolution(plannedSolutions[1]);
+
+        if (optimizationPriority === 'calories') {
+          // KALORIEN-PRIORITÄT: Verwende die effizientere Lösung (höhere kcal/ml)
+          if (sol1.kcalPerMl >= sol2.kcalPerMl) {
+            const fallbackRate1 = remainingCalories / (sol1.kcalPerMl * 24);
+            return [
+              { name: plannedSolutions[0], ratePerHour: fallbackRate1, mlPerDay: fallbackRate1 * 24 },
+              { name: plannedSolutions[1], ratePerHour: 0, mlPerDay: 0 }
+            ];
+          } else {
+            const fallbackRate2 = remainingCalories / (sol2.kcalPerMl * 24);
+            return [
+              { name: plannedSolutions[0], ratePerHour: 0, mlPerDay: 0 },
+              { name: plannedSolutions[1], ratePerHour: fallbackRate2, mlPerDay: fallbackRate2 * 24 }
+            ];
+          }
+        } else {
+          // PROTEIN/AS-PRIORITÄT: Erreiche AS-Ziel und komme dabei möglichst nah ans Kalorienziel
+          const sol1ProteinEquiv = this.solutionManager.getTotalAminoAcidEquivalent(sol1, 1);
+          const sol2ProteinEquiv = this.solutionManager.getTotalAminoAcidEquivalent(sol2, 1);
+
+          // Bestimme welches Ziel verwendet werden soll
+          const targetProteinAS = remainingAminoAcids > 0 ? remainingAminoAcids : (remainingProtein * 1.2);
+
+          // Berechne Raten für beide Lösungen
+          const rate1Option = sol1ProteinEquiv > 0 ? targetProteinAS / (sol1ProteinEquiv * 24) : 0;
+          const rate2Option = sol2ProteinEquiv > 0 ? targetProteinAS / (sol2ProteinEquiv * 24) : 0;
+
+          // Berechne wie viele Kalorien jede Option liefern würde
+          const cal1Option = rate1Option * 24 * sol1.kcalPerMl;
+          const cal2Option = rate2Option * 24 * sol2.kcalPerMl;
+
+          // Wähle die Option, die näher am Kalorienziel ist
+          const diff1 = Math.abs(cal1Option - remainingCalories);
+          const diff2 = Math.abs(cal2Option - remainingCalories);
+
+          if (diff1 <= diff2) {
+            return [
+              { name: plannedSolutions[0], ratePerHour: rate1Option, mlPerDay: rate1Option * 24 },
+              { name: plannedSolutions[1], ratePerHour: 0, mlPerDay: 0 }
+            ];
+          } else {
+            return [
+              { name: plannedSolutions[0], ratePerHour: 0, mlPerDay: 0 },
+              { name: plannedSolutions[1], ratePerHour: rate2Option, mlPerDay: rate2Option * 24 }
+            ];
+          }
+        }
+      }
 
       return [
         {

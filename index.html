@@ -96,7 +96,7 @@
             </div>
             <span class="auto-value" id="auto-calorie"></span>
 
-            <label for="calorie-goal-per-kg" class="per-kg-label">Kalorienziel (kcal/kg/Tag):</label>
+            <label for="calorie-goal-per-kg" class="per-kg-label">Kalorienziel (kcal/(kg·Tag)):</label>
             <div class="goal-input-group">
               <input type="number" id="calorie-goal-per-kg" step="0.1" class="goal-input">
               <button class="sync-button" onclick="syncGoalFromPerKg('calorie')" title="Auf kcal/Tag umrechnen">→</button>
@@ -110,15 +110,10 @@
             </div>
             <span class="auto-value" id="auto-amino"></span>
 
-            <label for="amino-goal-per-kg" class="per-kg-label">Aminosäureziel (g/kg/Tag):</label>
+            <label for="amino-goal-per-kg" class="per-kg-label">Aminosäureziel (g/(kg·Tag)):</label>
             <div class="goal-input-group">
               <input type="number" id="amino-goal-per-kg" step="0.01" class="goal-input">
               <button class="sync-button" onclick="syncGoalFromPerKg('amino')" title="Auf g/Tag umrechnen">→</button>
-            </div>
-
-            <div class="goal-checkbox">
-              <input type="checkbox" id="ignore-amino-goal">
-              <label for="ignore-amino-goal">Bei Laufraten-Berechnung ignorieren</label>
             </div>
           </div>
           <div class="goal-item">
@@ -129,29 +124,24 @@
             </div>
             <span class="auto-value" id="auto-protein"></span>
 
-            <label for="protein-goal-per-kg" class="per-kg-label">Proteinziel (g/kg/Tag):</label>
+            <label for="protein-goal-per-kg" class="per-kg-label">Proteinziel (g/(kg·Tag)):</label>
             <div class="goal-input-group">
               <input type="number" id="protein-goal-per-kg" step="0.01" class="goal-input">
               <button class="sync-button" onclick="syncGoalFromPerKg('protein')" title="Auf g/Tag umrechnen">→</button>
             </div>
-
-            <div class="goal-checkbox">
-              <input type="checkbox" id="ignore-protein-goal">
-              <label for="ignore-protein-goal">Bei Laufraten-Berechnung ignorieren</label>
-            </div>
           </div>
         </div>
 
-        <h3>Optimierungs-Priorität bei Zielkonflikten</h3>
-        <p class="info">Wenn die gewählten Lösungen die Ziele nicht gleichzeitig erreichen können (z.B. inkompatible Nährstoffverhältnisse), wird für das gewählte Ziel optimiert.</p>
+        <h3>Optimierungs-Priorität</h3>
+        <p class="info">Bestimmt, welches Ziel bei der Laufraten-Berechnung priorisiert wird. Bei einer Lösung bestimmt dies den limitierenden Faktor. Bei mehreren Lösungen bestimmt dies, wie bei Zielkonflikten optimiert wird.</p>
         <div class="priority-selection">
           <label>
             <input type="radio" name="optimization-priority" value="calories" checked>
-            <strong>Kalorien-Priorität</strong> (Kalorienziel erreichen, Protein/AS-Ziel überschreiten)
+            <strong>Kalorien-Priorität</strong> (Priorisiert Kalorienziel)
           </label>
           <label>
             <input type="radio" name="optimization-priority" value="protein">
-            <strong>Protein/AS-Priorität</strong> (Protein/AS-Ziel erreichen, Kalorienziel unterschreiten)
+            <strong>Protein/AS-Priorität</strong> (Priorisiert Protein- und Aminosäureziel)
           </label>
         </div>
 

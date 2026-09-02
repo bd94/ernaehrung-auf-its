@@ -235,16 +235,19 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
   const targetCalories = parseFloat(document.getElementById('calorie-goal').value);
   const targetAminoAcids = parseFloat(document.getElementById('amino-goal').value) || 0;
   const targetProtein = parseFloat(document.getElementById('protein-goal').value) || 0;
-  const ignoreAminoGoal = document.getElementById('ignore-amino-goal').checked;
-  const ignoreProteinGoal = document.getElementById('ignore-protein-goal').checked;
+
+  // Optimierungs-Priorität bestimmt, welche Ziele ignoriert werden
+  const optimizationPriority = document.querySelector('input[name="optimization-priority"]:checked').value;
+  const ignoreAminoGoal = (optimizationPriority === 'calories');
+  const ignoreProteinGoal = (optimizationPriority === 'calories');
 
   if (!targetCalories) {
     alert('Bitte zuerst Patientendaten berechnen und Kalorienziel eingeben.');
     return;
   }
 
-  if (!ignoreAminoGoal && !targetAminoAcids && !ignoreProteinGoal && !targetProtein) {
-    alert('Bitte Aminosäure- oder Proteinziel eingeben, oder beide Ziele als "ignorieren" markieren.');
+  if (optimizationPriority === 'protein' && !targetAminoAcids && !targetProtein) {
+    alert('Bei Protein/AS-Priorität muss mindestens ein Aminosäure- oder Proteinziel eingegeben werden.');
     return;
   }
 

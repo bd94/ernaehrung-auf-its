@@ -87,6 +87,6 @@ Patch Notes:
 v1.1: 
 - Bei unmöglicher Lösung des Gleichungssystems aufgrund unpassender Infusionslösungen wurden teilweise negative Laufraten berechnet und dann auf 0 gesetzt. Diese wurden zwar auf 0 gesetzt und als 0 mL/h angezeigt, allerdings im Hintergrund mit der anderen Infusionslösung trotzdem verrechnet, sodass es zu nicht nachvollziehbaren Diskrepanzen in verschiedenen Szenarien kam. 
 Wenn 2 Lösungen angesetzt werden, mit welchen die errechneten Ziele nicht erfüllt werden können, dann wird nun per Default das Aminosäure/Proteinziel ignoriert. 
-- Es wurden Schalter eingepflegt, mit welchen die o.g. Priorisierung bei unmöglicher Erfüllung der Ziele mit den vorgegebenen Lösungen angepasst werden kann. (Kalorienziel vs Protein-/Aminosäureziel)
+- Es wurden Schalter eingepflegt, mit welchen die o.g. Priorisierung bei unmöglicher Erfüllung der Ziele mit den vorgegebenen Lösungen angepasst werden kann (Kalorienziel vs Protein-/Aminosäureziel). Dies ersetzt die vorherigen Schalter "Bei Laufraten-Berechnung ignorieren" unter Aminosäure- und Proteinziel.
 - Im Bereich "Zielwerte" sind nun unterhalb der Tagesziele auch die Tagesziele pro kg KG aufgeführt und können (ebenso wie die Tagesziele) manuell geändert werden. Der Update button aktualisiert die jeweils abhängigen Felder. Die manuelle Änderung der Ziele wird bei der Laufraten-Berechnung berücksichtigt. 
 - Die Körpergröße kann nun in cm oder in m eingegeben werden. Bei Eingabe einer Zahl >3.0 wird von einer Eingabe in cm ausgegangen. 
