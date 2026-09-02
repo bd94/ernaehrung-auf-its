@@ -567,11 +567,7 @@ class InfusionRateCalculator {
       const a12 = sol2.kcalPerMl * 24;
       const b1 = remainingCalories;
 
-      // Bestimme welches Ziel verwendet werden soll (AS oder Protein)
-      // Wenn beide Ziele aktiv sind, bevorzuge Aminosäuren, wenn mindestens eine Lösung AS hat
-      let useAminoAcids = !ignoreAminoGoal;
-      let useProtein = !ignoreProteinGoal;
-
+      // Bestimme welches Ziel für die zweite Gleichung verwendet werden soll
       const sol1HasAmino = sol1.aminoAcidsPerMl > 0;
       const sol2HasAmino = sol2.aminoAcidsPerMl > 0;
       const sol1HasProtein = sol1.proteinPerMl > 0;
@@ -579,21 +575,51 @@ class InfusionRateCalculator {
 
       let a21, a22, b2;
 
-      if (useAminoAcids && (sol1HasAmino || sol2HasAmino || sol1HasProtein || sol2HasProtein)) {
-        // Verwende Aminosäure-Äquivalente (Protein wird zu AS konvertiert)
-        a21 = this.solutionManager.getTotalAminoAcidEquivalent(sol1, 1) * 24;
-        a22 = this.solutionManager.getTotalAminoAcidEquivalent(sol2, 1) * 24;
-        b2 = remainingAminoAcids;
-      } else if (useProtein && (sol1HasProtein || sol2HasProtein || sol1HasAmino || sol2HasAmino)) {
-        // Verwende Protein-Äquivalente (AS wird zu Protein konvertiert)
-        a21 = this.solutionManager.getTotalProteinEquivalent(sol1, 1) * 24;
-        a22 = this.solutionManager.getTotalProteinEquivalent(sol2, 1) * 24;
-        b2 = remainingProtein;
+      // Bei Kalorien-Priorität: Versuche trotzdem AS/Protein-Ziel zu erreichen
+      // Bei Protein/AS-Priorität: AS/Protein-Ziel ist primär
+      if (optimizationPriority === 'calories') {
+        // Kalorien-Priorität: Verwende AS/Protein als sekundäres Ziel
+        // Verwende targetAminoAcids/targetProtein anstatt remaining, da wir das volle Ziel nutzen wollen
+        if (sol1HasAmino || sol2HasAmino || sol1HasProtein || sol2HasProtein) {
+          a21 = this.solutionManager.getTotalAminoAcidEquivalent(sol1, 1) * 24;
+          a22 = this.solutionManager.getTotalAminoAcidEquivalent(sol2, 1) * 24;
+          b2 = targetAminoAcids - currentIntake.aminoAcids; // Verwende tatsächliches Ziel
+        } else {
+          // Keine Protein/AS Quellen - kann kein Gleichungssystem aufstellen
+          // Verwende die effizientere Lösung (höhere kcal/ml)
+          if (sol1.kcalPerMl >= sol2.kcalPerMl) {
+            const rate1 = remainingCalories / (sol1.kcalPerMl * 24);
+            return [
+              { name: plannedSolutions[0], ratePerHour: rate1, mlPerDay: rate1 * 24, limitingFactor: 'Kalorien' },
+              { name: plannedSolutions[1], ratePerHour: 0, mlPerDay: 0 }
+            ];
+          } else {
+            const rate2 = remainingCalories / (sol2.kcalPerMl * 24);
+            return [
+              { name: plannedSolutions[0], ratePerHour: 0, mlPerDay: 0 },
+              { name: plannedSolutions[1], ratePerHour: rate2, mlPerDay: rate2 * 24, limitingFactor: 'Kalorien' }
+            ];
+          }
+        }
       } else {
-        // Keine Protein/AS Ziele aktiv - verwende nur Kalorien
-        a21 = 0;
-        a22 = 0;
-        b2 = 0;
+        // Protein/AS-Priorität
+        let useAminoAcids = !ignoreAminoGoal;
+        let useProtein = !ignoreProteinGoal;
+
+        if (useAminoAcids && (sol1HasAmino || sol2HasAmino || sol1HasProtein || sol2HasProtein)) {
+          // Verwende Aminosäure-Äquivalente (Protein wird zu AS konvertiert)
+          a21 = this.solutionManager.getTotalAminoAcidEquivalent(sol1, 1) * 24;
+          a22 = this.solutionManager.getTotalAminoAcidEquivalent(sol2, 1) * 24;
+          b2 = remainingAminoAcids;
+        } else if (useProtein && (sol1HasProtein || sol2HasProtein || sol1HasAmino || sol2HasAmino)) {
+          // Verwende Protein-Äquivalente (AS wird zu Protein konvertiert)
+          a21 = this.solutionManager.getTotalProteinEquivalent(sol1, 1) * 24;
+          a22 = this.solutionManager.getTotalProteinEquivalent(sol2, 1) * 24;
+          b2 = remainingProtein;
+        } else {
+          // Sollte bei Protein/AS-Priorität nicht vorkommen
+          return null;
+        }
       }
 
       // Cramer's Rule
