@@ -385,21 +385,6 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
       const rq = (carbCalories * 1.0 + fatCalories * 0.7 + proteinCalories * 0.81) / totalCalories;
       document.getElementById('respiratory-quotient').textContent = rq.toFixed(2);
 
-      // Interpretation des RQ
-      let interpretation = '';
-      if (rq < 0.75) {
-        interpretation = '(sehr fettbetont)';
-      } else if (rq < 0.82) {
-        interpretation = '(fettbetont)';
-      } else if (rq < 0.88) {
-        interpretation = '(ausgewogen)';
-      } else if (rq < 0.95) {
-        interpretation = '(kohlenhydratbetont)';
-      } else {
-        interpretation = '(sehr kohlenhydratbetont)';
-      }
-      document.getElementById('rq-interpretation').textContent = interpretation;
-
       // Berechne Makronährstoff-Verteilung in Prozent
       const totalMacroCalories = carbCalories + fatCalories + proteinCalories;
       if (totalMacroCalories > 0) {
@@ -417,7 +402,6 @@ document.getElementById('calculate-rates-btn').addEventListener('click', () => {
       }
     } else {
       document.getElementById('respiratory-quotient').textContent = '-';
-      document.getElementById('rq-interpretation').textContent = '';
       document.getElementById('macro-carbs-percent').textContent = '-';
       document.getElementById('macro-fat-percent').textContent = '-';
       document.getElementById('macro-protein-percent').textContent = '-';
